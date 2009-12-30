@@ -1,9 +1,11 @@
 (in-package :chillax)
 
 (defun strcat (string &rest more-strings)
+  "Concatenates a series of strings."
   (apply 'concatenate 'string string more-strings))
 
 (defun double-quote (string)
+  "Wraps STRING with escaped double quotes."
   (strcat "\"" string "\""))
 
 (defun ensure-keyword (obj)
