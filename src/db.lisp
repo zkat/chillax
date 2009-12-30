@@ -172,9 +172,9 @@ with a particular CouchDB database.")
 ;; TODO - CouchDB places restrictions on what sort of URLs are accepted, such as everything having
 ;;        to be downcase, and only certain characters being accepted. There is also special meaning
 ;;        behing the use of /, so a mechanism to escape it in certain situations would be good.
-(defmessage db-request (db &key)
+(defmessage db-request (db uri &key)
   (:documentation "Sends a CouchDB request to DB.")
-  (:reply ((db =database=) &rest all-keys &key (uri ""))
+  (:reply ((db =database=) uri &rest all-keys)
     (apply #'couch-request (server db) (strcat (name db) "/" uri) all-keys)))
 
 (defmacro handle-request ((result-var request) &body expected-responses)
@@ -193,7 +193,7 @@ keywords."
 (defmessage db-info (db)
   (:documentation "Fetches info about a given database from the CouchDB server.")
   (:reply ((db =database=))
-    (handle-request (response (db-request db))
+    (handle-request (response (db-request db ""))
       (:ok response)
       (:internal-server-error (error "Illegal database name: ~A" (name db)))
       (:not-found (error 'db-not-found :uri (db-namestring db))))))
@@ -208,7 +208,7 @@ that can be used to perform operations on it."
 (defun create-db (name &key (prototype =database=) (server =json-server=))
   "Creates a new CouchDB database. Returns a database object that can be used to operate on it."
   (let ((db (create prototype 'server server 'name name)))
-    (handle-request (response (db-request db :method :put))
+    (handle-request (response (db-request db "" :method :put))
       (:created db)
       (:internal-server-error (error "Illegal database name: ~A" name))
       (:precondition-failed (error 'db-already-exists :uri (db-namestring db))))))
@@ -222,20 +222,20 @@ that can be used to perform operations on it."
 (defmessage delete-db (db &key)
   (:documentation "Deletes a CouchDB database.")
   (:reply ((db =database=) &key)
-    (handle-request (response (db-request db :method :delete))
+    (handle-request (response (db-request db "" :method :delete))
       (:ok response)
       (:not-found (error 'db-not-found :uri (db-namestring db))))))
 
 (defmessage compact-db (db)
   (:documentation "Triggers a database compaction.")
   (:reply ((db =database=))
-    (handle-request (response (db-request db :uri "_compact" :method :post))
+    (handle-request (response (db-request db "_compact" :method :post))
       (:accepted response))))
 
 (defmessage changes (db)
   (:documentation "Returns the changes feed for DB")
   (:reply ((db =database=))
-    (handle-request (response (db-request db :uri "_changes"))
+    (handle-request (response (db-request db "_changes"))
       (:ok response))))
 
 ;;;
@@ -244,7 +244,7 @@ that can be used to perform operations on it."
 (defmessage get-document (db id)
   (:documentation "Returns an CouchDB document from DB as an alist.")
   (:reply ((db =database=) id)
-    (handle-request (response (db-request db :uri id))
+    (handle-request (response (db-request db id))
       (:ok response)
       (:not-found (error 'document-not-found :db db :id id)))))
 
@@ -255,13 +255,13 @@ that can be used to perform operations on it."
     (when endkey (push `("endkey" . ,(prin1-to-string endkey)) params))
     (when limit (push `("limit" . ,(prin1-to-string limit)) params))
     (when include-docs (push `("include_docs" . "true") params))
-    (handle-request (response (db-request db :uri "_all_docs" :parameters params))
+    (handle-request (response (db-request db "_all_docs" :parameters params))
       (:ok response))))
 
 (defmessage batch-get-documents (db &rest doc-ids)
   (:documentation "Uses _all_docs to quickly fetch the given DOC-IDs in a single request.")
   (:reply ((db =database=) &rest doc-ids)
-    (handle-request (response (db-request db :uri "_all_docs" :method :post
+    (handle-request (response (db-request db "_all_docs" :method :post
                                           :parameters '(("include_docs" . "true"))
                                           :content (format nil "{\"foo\":[~{~S~^,~}]}" doc-ids)))
       (:ok response))))
@@ -269,8 +269,7 @@ that can be used to perform operations on it."
 (defmessage put-document (db id doc &key)
   (:documentation "Puts a document into DB, using ID.")
   (:reply ((db =database=) id doc &key batch-ok-p)
-    (handle-request (response (db-request db :uri id :method :put
-                                          :content doc
+    (handle-request (response (db-request db id :method :put :content doc
                                           :parameters (when batch-ok-p '(("batch" . "ok")))))
       ((:created :accepted) response)
       (:conflict (error 'document-conflict :id id :doc doc)))))
@@ -281,21 +280,20 @@ document does not already exist. Note that using this function is discouraged in
 documentation, since it may result in duplicate documents because of proxies and other network
 intermediaries.")
   (:reply ((db =database=) doc)
-    (handle-request (response (db-request db :method :post :content doc))
+    (handle-request (response (db-request db "" :method :post :content doc))
       ((:created :accepted) response)
       (:conflict (error 'document-conflict :doc doc)))))
 
 (defmessage delete-document (db id revision)
   (:documentation "Deletes an existing document.")
   (:reply ((db =database=) id revision)
-    (handle-request (response (db-request db :method :delete
-                                          :uri (format nil "~A?rev=~A" id revision)))
+    (handle-request (response (db-request db (format nil "~A?rev=~A" id revision) :method :delete))
       (:ok response))))
 
 (defmessage copy-document (db from-id to-id &key)
   (:documentation "Copies a document's content in-database.")
   (:reply ((db =database=) from-id to-id &key revision)
-    (handle-request (response (db-request db :uri from-id :method :copy
+    (handle-request (response (db-request db from-id :method :copy
                                           :additional-headers `(("Destination" . ,to-id))
                                           :parameters `(,(when revision `("rev" . ,revision)))))
       (:created response))))
