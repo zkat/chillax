@@ -11,5 +11,8 @@
             :serial t
             :components
             ((:file "package")
+             (:file "utils")
+             (:file "encoder")
+             (:file "decoder")
              (:file "db")))))
 
