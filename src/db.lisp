@@ -138,14 +138,8 @@ with a particular CouchDB database.")
 ;;        behing the use of /, so a mechanism to escape it in certain situations would be good.
 (defmessage db-request (db &key)
   (:documentation "Sends a CouchDB request to DB.")
-  (:reply ((db =database=) &key (uri "") (method :get) content
-           (external-format-out *drakma-default-external-format*)
-           parameters additional-headers)
-    (couch-request (server db) :method method :content content
-                   :uri (strcat (name db) "/" uri)
-                   :external-format-out external-format-out
-                   :parameters parameters
-                   :additional-headers additional-headers)))
+  (:reply ((db =database=) &rest all-keys &key (uri ""))
+    (apply #'couch-request (server db) :uri (strcat (name db) "/" uri) all-keys)))
 
 (defmacro handle-request (result-var request &body expected-responses)
   (let ((status-code (gensym "STATUS-CODE-")))
