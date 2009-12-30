@@ -71,6 +71,8 @@
   ((host "127.0.0.1")
    (port 5984)))
 
+(defproto =json-server= =server=)
+
 (defun server->url (server)
   (with-properties (host port) server
     (format nil "http://~A:~A/" host port)))
@@ -89,7 +91,10 @@
                            ;; The code should never get here once we know all the
                            ;; status codes CouchDB might return.
                            (error "Unknown status code: ~A. HTTP Response: ~A"
-                                  status-code response))))))
+                                  status-code response)))))
+  (:reply :around ((server =json-server=) &key)
+    (multiple-value-bind (response status-code) (call-next-reply)
+      (values (json-to-document response) status-code))))
 
 (defun all-dbs (server)
   (couch-request server :uri "_all_dbs"))
@@ -155,14 +160,14 @@ with a particular CouchDB database.")
       (:internal-server-error (error "Illegal database name: ~A" (name db)))
       (:not-found (error 'db-not-found :uri (db-namestring db))))))
 
-(defun connect-to-db (name &key (prototype =database=) (server =server=))
+(defun connect-to-db (name &key (prototype =database=) (server =json-server=))
   "Confirms that a particular CouchDB database exists. If so, returns a new database object
 that can be used to perform operations on it."
   (let ((db (create prototype 'server server 'name name)))
     (when (db-info db)
       db)))
 
-(defun create-db (name &key (prototype =database=) (server =server=))
+(defun create-db (name &key (prototype =database=) (server =json-server=))
   "Creates a new CouchDB database. Returns a database object that can be used to operate on it."
   (let ((db (create prototype 'server server 'name name)))
     (handle-request response (db-request db :method :put)

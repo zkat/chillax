@@ -1,13 +1,5 @@
 (in-package :chillax)
 
-(defvar *json-symbols-package* (find-package 'keyword) 
-  "The package where json-symbols are interned. Default keyword, nil = current package")
-
-;; (defun json-intern (string)
-;;   (if *json-symbols-package*
-;;       (intern (camel-case-to-lisp string) *json-symbols-package*)
-;;       (intern (camel-case-to-lisp string))))
-
 (defun json-intern (string)
   (ensure-keyword string))
 
