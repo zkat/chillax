@@ -89,10 +89,11 @@
   (:reply ((server =server=) &rest all-keys &key (uri ""))
     (multiple-value-bind (response status-code)
         (apply #'http-request (strcat (server->url server) uri)
-               :content-type "application/json" all-keys
+               :content-type "application/json"
                :external-format-out +utf-8+
                :basic-authorization (with-properties (username password) server
-                                      (when username (list username password))))
+                                      (when username (list username password)))
+               all-keys)
       (values response (or (cdr (assoc status-code *status-codes* :test #'=))
                            ;; The code should never get here once we know all the
                            ;; status codes CouchDB might return.
