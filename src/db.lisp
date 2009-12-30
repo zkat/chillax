@@ -78,11 +78,19 @@
   (with-properties (host port) server
     (format nil "http://~A:~A/" host port)))
 
+(defparameter +utf-8+ (make-external-format :utf-8 :eol-style :lf))
+
+(defun ensure-json (maybe-json)
+  (etypecase maybe-json
+    (string maybe-json)
+    (list (document-to-json maybe-json))))
+
 (defmessage couch-request (server &key)
   (:reply ((server =server=) &rest all-keys &key (uri ""))
     (multiple-value-bind (response status-code)
         (apply #'http-request (strcat (server->url server) uri)
                :content-type "application/json" all-keys
+               :external-format-out +utf-8+
                :basic-authorization (with-properties (username password) server
                                       (when username (list username password))))
       (values response (or (cdr (assoc status-code *status-codes* :test #'=))
@@ -92,11 +100,7 @@
                                   status-code response)))))
   (:reply :around ((server =json-server=) &rest all-keys &key (content nil contentp))
     (multiple-value-bind (response status-code)
-        (apply #'call-next-reply server :content (when contentp
-                                                   (if (stringp content)
-                                                       content
-                                                       (document-to-json content)))
-               all-keys)
+        (apply #'call-next-reply server :content (when contentp (ensure-json content)) all-keys)
       (values (json-to-document response) status-code))))
 
 (defun all-dbs (server)
@@ -121,8 +125,6 @@
 ;;;
 ;;; Basic database API
 ;;;
-(defparameter +utf-8+ (make-external-format :utf-8 :eol-style :lf))
-
 (defproto =database= ()
   ((server (create =server=)) name)
   :documentation
