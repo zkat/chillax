@@ -127,11 +127,21 @@ where appropriate, which makes for a nicer Lisp-side API."
   "Requests the current configuration from SERVER."
   (couch-request server "_config"))
 
-(defun replicate (server source target)
+(defun replicate (server source target &key create-target-p continuousp
+                  &aux (alist `(("source" . ,source) ("target" . ,target))))
   "Replicates the database in SOURCE to TARGET. SOURCE and TARGET can both be either database names
-in the local server, or full URLs. Note that TARGET must already exist before replication can occur."
-  (couch-request server :method :post
-                 :uri (format nil "_replicate?source=~A&target=~A" source target)))
+in the local server, or full URLs to local or remote databases. If CREATE-TARGET-P is true, the target
+database will automatically be created if it does not exist. If CONTINUOUSP is true, CouchDB will
+continue propagating any changes in SOURCE to TARGET."
+  ;; There are some caveats to the keyword arguments -
+  ;; create-target-p: doesn't actually seem to work at all in CouchDB 0.10
+  ;; continuousp: The CouchDB documentation warns that this continuous replication
+  ;;              will only last as long as the CouchDB daemon is running. If the
+  ;;              daemon is restarted, replication must be restarted as well.
+  ;;              Note that there are plans to add 'persistent' replication.
+  (when create-target-p (push '("create_target" . t) alist))
+  (when continuousp (push '("continuous" . t) alist))
+  (couch-request server "_replicate" :method :post :content (document-to-json alist)))
 
 (defun stats (server)
   "Requests general statistics from SERVER."
