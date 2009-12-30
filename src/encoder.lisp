@@ -41,7 +41,7 @@
   (cond
     ((null symbol) (write-json-chars "null" stream))
     ((eq 't symbol) (write-json-chars "true" stream))
-    (t (write-json-string (as-field-name-string symbol) stream))))
+    (t (write-json-string (ensure-string symbol) stream))))
 
 (defun keyword-assocp (e)
   "Return true if element is a list that begins with a keyword. This
@@ -71,7 +71,7 @@ nil."
      do 
        (let ((cons (car e)))
          (cond ((stringp (car cons))
-                (write-string (doublequote (car cons)) stream))
+                (write-string (double-quote (car cons)) stream))
                ((symbolp (car cons))
                 (write-json-symbol (car cons) stream)))
          (write-char #\: stream)

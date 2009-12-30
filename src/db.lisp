@@ -1,9 +1,5 @@
 (in-package :chillax)
 
-;;; utils
-(defun strcat (string &rest more-strings)
-  (apply 'concatenate 'string string more-strings))
-
 ;;;
 ;;; Status codes
 ;;;
