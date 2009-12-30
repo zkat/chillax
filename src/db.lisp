@@ -69,7 +69,8 @@
 ;;;
 (defproto =server= ()
   ((host "127.0.0.1")
-   (port 5984)))
+   (port 5984)
+   username password))
 
 (defproto =json-server= =server=)
 
@@ -78,15 +79,12 @@
     (format nil "http://~A:~A/" host port)))
 
 (defmessage couch-request (server &key)
-  (:reply ((server =server=) &key (uri "") (method :get) content parameters additional-headers
-           (external-format-out *drakma-default-external-format*))
+  (:reply ((server =server=) &rest all-keys &key (uri ""))
     (multiple-value-bind (response status-code)
-        (http-request (strcat (server->url server) uri)
-                      :method method :content content
-                      :external-format-out external-format-out
-                      :content-type "application/json"
-                      :parameters parameters
-                      :additional-headers additional-headers)
+        (apply #'http-request (strcat (server->url server) uri)
+               :content-type "application/json" all-keys
+               :basic-authorization (with-properties (username password) server
+                                      (when username (list username password))))
       (values response (or (cdr (assoc status-code *status-codes* :test #'=))
                            ;; The code should never get here once we know all the
                            ;; status codes CouchDB might return.
