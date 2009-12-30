@@ -9,7 +9,7 @@
 ;;       (intern (camel-case-to-lisp string))))
 
 (defun json-intern (string)
-  (as-keyword-symbol string))
+  (ensure-keyword string))
 
 (defparameter *json-rules* nil)
 
