@@ -242,13 +242,26 @@ that can be used to perform operations on it."
       (:ok response))))
 
 (defmessage put-document (db id doc &key)
-  (:documentation "Puts a new document into DB, using ID.")
+  (:documentation "Puts a document into DB, using ID.")
   (:reply ((db =database=) id doc &key batch-ok-p)
     (handle-request response
         (db-request db :uri id :method :put
                     :external-format-out +utf-8+
                     :content doc
                     :parameters (when batch-ok-p '(("batch" . "ok"))))
+      ((:created :accepted) response)
+      (:conflict (error 'document-conflict :id id :doc doc)))))
+
+(defmessage post-document (db doc)
+  (:documentation "POSTs a document into DB. CouchDB will automatically assign a UUID if the
+document does not already exist. Note that using this function is discouraged in the CouchDB
+documentation, since it may result in duplicate documents because of proxies and other network
+intermediaries.")
+  (:reply ((db =database=) doc)
+    (handle-request response
+        (db-request db :method :post
+                    :external-format-out +utf-8+
+                    :content doc)
       ((:created :accepted) response)
       (:conflict (error 'document-conflict :id id :doc doc)))))
 
