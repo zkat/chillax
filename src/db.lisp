@@ -263,7 +263,7 @@ that can be used to perform operations on it."
   (:reply ((db =database=) &rest doc-ids)
     (handle-request (response db "_all_docs" :method :post
                               :parameters '(("include_docs" . "true"))
-                              :content (format nil "{\"foo\":[~{~S~^,~}]}" doc-ids))
+                              :content (format nil "{\"keys\":[~{~S~^,~}]}" doc-ids))
       (:ok response))))
 
 (defmessage put-document (db id doc &key)
