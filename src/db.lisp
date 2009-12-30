@@ -92,8 +92,13 @@
                            ;; status codes CouchDB might return.
                            (error "Unknown status code: ~A. HTTP Response: ~A"
                                   status-code response)))))
-  (:reply :around ((server =json-server=) &key)
-    (multiple-value-bind (response status-code) (call-next-reply)
+  (:reply :around ((server =json-server=) &rest all-keys &key (content nil contentp))
+    (multiple-value-bind (response status-code)
+        (apply #'call-next-reply server :content (when contentp
+                                                   (if (stringp content)
+                                                       content
+                                                       (document-to-json content)))
+               all-keys)
       (values (json-to-document response) status-code))))
 
 (defun all-dbs (server)
