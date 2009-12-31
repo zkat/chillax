@@ -1,23 +1,4 @@
-Chillax has the following copyright:
-
 Copyright © 2009 Josh Marchán
-
-Additionally, parts of Chillax are derived from Clouchdb, which has
-the following copyright:
-
-Copyright (c) 2007 Peter Eddy. All rights reserved.
-
-The code taken from Clouchdb is itself derived from CL-JSON, which
-has the following copyright:
-
-Copyright © 2006-2008 Henrik Hjelte.
-Copyright © 2008 Hans Hübner.
-
-This work is licensed under the terms of the MIT / X Consortium license, reproduced
-below. Mr. Hübner's copyright applies to the code of the streaming API borrowed from his program
-YASON and transferred under this license with his permission.
-
-Chillax and Clouchdb are both also licensed under the MIT / X Consortium license.
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
