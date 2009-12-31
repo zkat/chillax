@@ -4,15 +4,12 @@
   :maintainer "Kat Marchán <kzm@sykosomatic.org>"
   :author "Kat Marchán <kzm@sykosomatic.org>"
   :licence "MIT"
-  :depends-on (flexi-streams sheeple drakma)
+  :depends-on (flexi-streams sheeple drakma yason)
   :serial t
   :components
   ((:module src
             :serial t
             :components
             ((:file "package")
-             (:file "utils")
-             (:file "encoder")
-             (:file "decoder")
              (:file "db")))))
 

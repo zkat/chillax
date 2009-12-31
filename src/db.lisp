@@ -1,5 +1,10 @@
 (in-package :chillax)
 
+;;; util
+(defun strcat (string &rest more-strings)
+  "Concatenates a series of strings."
+  (apply 'concatenate 'string string more-strings))
+
 ;;;
 ;;; Status codes
 ;;;
@@ -88,21 +93,12 @@ handle encoding/decoding of JSON to and from alists.")
 
 (defparameter +utf-8+ (make-external-format :utf-8 :eol-style :lf))
 
-(defun ensure-json (maybe-json)
-  "Makes sure MAYBE-JSON is a json-encoded string."
-  ;; In reality, this should probably do more thorough checking, but for practical purposes,
-  ;; this crappy etypecase should be enough.
-  (etypecase maybe-json
-    (string maybe-json)
-    (list (document-to-json maybe-json))))
-
 (defmessage couch-request (server uri &key)
   (:documentation "Sends an HTTP request to the CouchDB server represented by SERVER. Most
 of the keyword arguments for drakma:http-request are available as kwargs for this message.")
   (:reply ((server =server=) uri &rest all-keys)
     (multiple-value-bind (response status-code)
         (apply #'http-request (strcat (server->url server) uri)
-               :content-type "application/json"
                :external-format-out +utf-8+
                :basic-authorization (with-properties (username password) server
                                       (when username (list username password)))
@@ -116,8 +112,8 @@ of the keyword arguments for drakma:http-request are available as kwargs for thi
     "This special :around reply wraps the standard =server= reply and encodes/decodes JSON
 where appropriate, which makes for a nicer Lisp-side API."
     (multiple-value-bind (response status-code)
-        (apply #'call-next-reply server uri :content (when contentp (ensure-json content)) all-keys)
-      (values (json-to-document response) status-code))))
+        (apply #'call-next-reply server uri :content (when contentp (json:encode content)) all-keys)
+      (values (json:parse response) status-code))))
 
 (defun all-dbs (server)
   "Requests a list of all existing databases from SERVER."
@@ -128,7 +124,7 @@ where appropriate, which makes for a nicer Lisp-side API."
   (couch-request server "_config"))
 
 (defun replicate (server source target &key create-target-p continuousp
-                  &aux (alist `(("source" . ,source) ("target" . ,target))))
+                  &aux (to-json `("source" ,source "target" ,target)))
   "Replicates the database in SOURCE to TARGET. SOURCE and TARGET can both be either database names
 in the local server, or full URLs to local or remote databases. If CREATE-TARGET-P is true, the target
 database will automatically be created if it does not exist. If CONTINUOUSP is true, CouchDB will
@@ -139,9 +135,9 @@ continue propagating any changes in SOURCE to TARGET."
   ;;              will only last as long as the CouchDB daemon is running. If the
   ;;              daemon is restarted, replication must be restarted as well.
   ;;              Note that there are plans to add 'persistent' replication.
-  (when create-target-p (push '("create_target" . t) alist))
-  (when continuousp (push '("continuous" . t) alist))
-  (couch-request server "_replicate" :method :post :content (document-to-json alist)))
+  (when create-target-p (setf to-json (append `("create_target" "true") to-json)))
+  (when continuousp (setf to-json (append `("continuous" "true") to-json)))
+  (couch-request server "_replicate" :method :post :content (format nil "{~{~s:~s~^,~}}" to-json)))
 
 (defun stats (server)
   "Requests general statistics from SERVER."
