@@ -2,6 +2,10 @@
 (defpackage #:chillax-server-user (:use :cl))
 (in-package :chillax-server)
 
+(defmacro fun (&body body)
+  "This macro puts the FUN back in FUNCTION."
+  `(lambda (&optional _) (declare (ignorable _)) ,@body))
+
 (defvar *map-results*)
 (defvar *functions*)
 
@@ -33,16 +37,14 @@
   (with-user-package (funcall function doc)) (or *map-results* '(#())))
 
 (defun map-doc (doc)
-  (or (mapcar (lambda (fn) (call-map-function fn doc)) *functions*) '((#()))))
+  (or (mapcar (fun (call-map-function _ doc)) *functions*) '((#()))))
 
 (defun reduce-map (fun-strings keys values)
-  (list t (mapcar (lambda (fn) (with-user-package
-                                 (funcall (eval (read-from-string fn)) keys values)))
+  (list t (mapcar (fun (with-user-package (funcall (eval (read-from-string _)) keys values)))
                   fun-strings)))
 
 (defun rereduce (fun-strings reduce-results)
-  (list t (mapcar (lambda (fn) (with-user-package
-                                 (funcall (eval (read-from-string fn)) reduce-results)))
+  (list t (mapcar (fun (with-user-package (funcall (eval (read-from-string _)) reduce-results)))
                   fun-strings)))
 
 (defun run-server (&aux *functions*)
