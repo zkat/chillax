@@ -1,5 +1,4 @@
 (defpackage #:chillax-server (:use :cl))
-(defpackage #:chillax-server-user (:use :cl))
 (in-package :chillax-server)
 
 (defmacro fun (&body body)
@@ -17,10 +16,6 @@
   (when (boundp *map-results*)
     (push (list k v) *map-results*)))
 
-(defmacro with-user-package (&body body)
-  `(let ((*package* (find-package :chillax-server-user)))
-     ,@body))
-
 (defun couch-log (format-string &rest format-args)
   (format t "[\"log\", ~S]~%" (apply #'format nil format-string format-args))
   (finish-output))
@@ -34,18 +29,16 @@
 (defun reset () (setf *functions* nil) t)
 
 (defun call-map-function (function doc &aux *map-results*)
-  (with-user-package (funcall function doc)) (or *map-results* '(#())))
+  (funcall function doc) (or *map-results* '(#())))
 
 (defun map-doc (doc)
   (or (mapcar (fun (call-map-function _ doc)) *functions*) '((#()))))
 
 (defun reduce-map (fun-strings keys values)
-  (list t (mapcar (fun (with-user-package (funcall (eval (read-from-string _)) keys values)))
-                  fun-strings)))
+  (list t (mapcar (fun (funcall (eval (read-from-string _)) keys values)) fun-strings)))
 
 (defun rereduce (fun-strings reduce-results)
-  (list t (mapcar (fun (with-user-package (funcall (eval (read-from-string _)) reduce-results)))
-                  fun-strings)))
+  (list t (mapcar (fun (funcall (eval (read-from-string _)) reduce-results)) fun-strings)))
 
 (defun run-server (&aux *functions*)
   (handler-case
