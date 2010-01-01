@@ -45,7 +45,7 @@
 (defun rereduce (fun-strings reduce-results)
   (list t (mapcar (fun (funcall (compile nil (read-from-string _)) reduce-results)) fun-strings)))
 
-(defun run-server (&aux *functions*)
+(defun run-server (&aux *functions* (*package* (find-package :chillax-server)))
   (handler-case
       (loop for input = (read-line)
          for parsed = (json:parse input)
