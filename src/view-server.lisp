@@ -21,10 +21,15 @@
   (finish-output))
 
 (defun add-fun (string)
-  (handler-case (prog1 t (push (compile nil (read-from-string string)) *functions*))
-    (error (err)
-      (equal-hash "error" "function_compilation_failed"
-                  "reason" (princ-to-string (type-of err))))))
+  (multiple-value-bind (function warningsp failurep)
+      (compile nil (read-from-string string))
+    (when warningsp
+      (couch-log "A view did not compile cleanly."))
+    (if failurep
+        ;; FIXME: This is basically a constant.
+        (equal-hash "error" "function_compilation_failed"
+                    "reason" "Errors were signaled during compilation")
+        (progn (push function *functions*) t))))
 
 (defun reset () (setf *functions* nil) t)
 
