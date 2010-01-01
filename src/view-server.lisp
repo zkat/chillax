@@ -40,7 +40,7 @@
 (defun rereduce (fun-strings reduce-results)
   (list t (mapcar (fun (funcall (eval (read-from-string _)) reduce-results)) fun-strings)))
 
-(defun run-server ()
+(defun run-server (&aux *functions*)
   (handler-case
       (loop for input = (read-line)
          for parsed = (json:parse input)
