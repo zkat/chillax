@@ -1,4 +1,5 @@
-(defpackage #:chillax-server (:use :cl))
+(defpackage #:chillax-server
+  (:use :cl :chillax-string-case))
 (in-package :chillax-server)
 
 (defmacro fun (&body body)

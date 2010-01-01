@@ -10,4 +10,5 @@
   ((:module src
             :serial t
             :components
-            ((:file "view-server")))))
+            ((:file "string-case")
+             (:file "view-server")))))
