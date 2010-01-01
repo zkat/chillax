@@ -53,16 +53,19 @@
   (handler-case
       (loop for input = (read-line)
          for parsed = (json:parse input)
-         do (json:encode (cond ((string= (car parsed) "reset") (reset))
-                               ((string= (car parsed) "add_fun") (add-fun (cadr parsed)))
-                               ((string= (car parsed) "map_doc") (map-doc (cadr parsed)))
-                               ((string= (car parsed) "reduce")
-                                (loop for result in (third parsed)
-                                   collect (caar result) into keys
-                                   collect (cadr result) into values
-                                   finally (return (reduce-map (second parsed) keys values))))
-                               ((string= (car parsed) "rereduce") (apply #'rereduce (cdr parsed)))
-                               (t (error "Unknown message: ~S" input))))
+         do (json:encode
+             (cond ((string= (car parsed) "reset") (reset))
+                   ((string= (car parsed) "add_fun") (add-fun (cadr parsed)))
+                   ((string= (car parsed) "map_doc") (map-doc (cadr parsed)))
+                   ((string= (car parsed) "reduce")
+                    (loop for result in (third parsed)
+                       collect (caar result) into keys
+                       collect (cadr result) into values
+                       finally (return (reduce-map (second parsed) keys values))))
+                   ((string= (car parsed) "rereduce") (apply #'rereduce (cdr parsed)))
+                   (t (couch-log "Unknown-message: ~A" (car parsed))
+                      (equal-hash "error" "unknown_message"
+                                  "reason" "Received an unknown message from CouchDB"))))
          (terpri)
          (finish-output))
     (end-of-file () nil)))
