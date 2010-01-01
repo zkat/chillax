@@ -408,9 +408,8 @@
 ;;; code size, especially when the default form is
 ;;; large.
 
-(defmacro string-case ((string &key (default '(error "No match")))
-                       &body cases)
-  "(string-case (string &key default)
+(defmacro string-case (string &body cases)
+  "(string-case string
      case*)
    case ::= string form*
           | t      form*
@@ -429,7 +428,7 @@
                   (rest case)))))
     (let ((input-var    (gensym "INPUT"))
           (default-fn   (gensym "ON-ERROR"))
-          (default-body (gethash t cases-table (list default))))
+          (default-body (gethash t cases-table)))
       `(let ((,input-var ,string))
          (flet ((,default-fn ()
                   ,@default-body))
