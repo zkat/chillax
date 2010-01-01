@@ -21,7 +21,7 @@
   (finish-output))
 
 (defun add-fun (string)
-  (handler-case (prog1 t (push (eval (read-from-string string)) *functions*))
+  (handler-case (prog1 t (push (compile nil (read-from-string string)) *functions*))
     (error (err)
       (equal-hash "error" "function_compilation_failed"
                   "reason" (princ-to-string (type-of err))))))
@@ -35,10 +35,10 @@
   (or (mapcar (fun (call-map-function _ doc)) *functions*) '((#()))))
 
 (defun reduce-map (fun-strings keys values)
-  (list t (mapcar (fun (funcall (eval (read-from-string _)) keys values)) fun-strings)))
+  (list t (mapcar (fun (funcall (compile nil (read-from-string _)) keys values)) fun-strings)))
 
 (defun rereduce (fun-strings reduce-results)
-  (list t (mapcar (fun (funcall (eval (read-from-string _)) reduce-results)) fun-strings)))
+  (list t (mapcar (fun (funcall (compile nil (read-from-string _)) reduce-results)) fun-strings)))
 
 (defun run-server (&aux *functions*)
   (handler-case
