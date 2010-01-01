@@ -53,11 +53,11 @@
 ;;; I usually don't use packages for throw-away code, but this looks
 ;;; like it could be useful to someone.
 
-(cl:defpackage #:string-case
+(cl:defpackage #:chillax-string-case
   (:use    #:cl #+sbcl #:sb-c #+sbcl #:sb-vm)
   (:export #:string-case))
 
-(cl:in-package #:string-case)
+(cl:in-package #:chillax-string-case)
 
 ;;;# Some utility code
 
