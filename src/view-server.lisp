@@ -45,7 +45,11 @@
 (defun rereduce (fun-strings values)
   (list t (mapcar (fun (funcall (compile nil (read-from-string _)) keys values t)) fun-strings)))
 
-(defun run-server (&aux *functions* (*package* (find-package :chillax-server)))
+(defun run-server (&aux *functions* (*package* (find-package :chillax-server))
+                   (black-hole (make-broadcast-stream))
+                   (*error-output* black-hole)
+                   (*debug-io* black-hole)
+                   (*trace-output* black-hole))
   (handler-case
       (loop for input = (read-line)
          for parsed = (json:parse input)
