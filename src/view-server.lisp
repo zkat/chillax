@@ -1,5 +1,4 @@
-(defpackage #:chillax-server
-  (:use :cl :chillax-string-case))
+(defpackage #:chillax-server (:use :cl))
 (in-package :chillax-server)
 
 (defmacro fun (&body body)
@@ -50,17 +49,16 @@
   (handler-case
       (loop for input = (read-line)
          for parsed = (json:parse input)
-         do (json:encode (string-case (car parsed)
-                           ("reset" (reset))
-                           ("add_fun" (add-fun (cadr parsed)))
-                           ("map_doc" (map-doc (cadr parsed)))
-                           ("reduce"
-                            (loop for result in (third parsed)
-                               collect (caar result) into keys
-                               collect (cadr result) into values
-                               finally (return (reduce-map (second parsed) keys values))))
-                           ("rereduce" (apply #'rereduce (cdr parsed)))
-                           (t (error "Unknown message: ~S" input))))
+         do (json:encode (cond ((string= (car parsed) "reset") (reset))
+                               ((string= (car parsed) "add_fun") (add-fun (cadr parsed)))
+                               ((string= (car parsed) "map_doc") (map-doc (cadr parsed)))
+                               ((string= (car parsed) "reduce")
+                                (loop for result in (third parsed)
+                                   collect (caar result) into keys
+                                   collect (cadr result) into values
+                                   finally (return (reduce-map (second parsed) keys values))))
+                               ((string= (car parsed) "rereduce") (apply #'rereduce (cdr parsed)))
+                               (t (error "Unknown message: ~S" input))))
          (terpri)
          (finish-output))
     (end-of-file () nil)))
