@@ -17,7 +17,7 @@
     (push (list k v) *map-results*)))
 
 (defun couch-log (format-string &rest format-args)
-  (format t "[\"log\", ~S]~%" (apply #'format nil format-string format-args))
+  (format t "~&[\"log\", ~S]~%" (apply #'format nil format-string format-args))
   (finish-output))
 
 (defun add-fun (string)
