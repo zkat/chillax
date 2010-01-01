@@ -21,7 +21,7 @@
   (multiple-value-bind (function warningsp failurep)
       (compile nil (read-from-string string))
     (when warningsp
-      (couch-log "View function did not compile cleanly: ~A" string))
+      (couch-log "View function did not compile cleanly: ~A" (remove #\Newline string)))
     (if failurep
         ;; FIXME: This is basically a constant.
         (error 'function-compilation-error :string string)
@@ -76,7 +76,7 @@
                                       "reason" "Received an unknown message from CouchDB")))
                (error (e)
                  (equal-hash "error" (princ-to-string (type-of e))
-                             "reason" (princ-to-string e)))))
+                             "reason" (prin1-to-string e)))))
          (terpri)
          (finish-output))
     (end-of-file () nil)))
