@@ -40,10 +40,10 @@
   (or (mapcar (fun (call-map-function _ doc)) *functions*) '((#()))))
 
 (defun reduce-map (fun-strings keys values)
-  (list t (mapcar (fun (funcall (compile nil (read-from-string _)) keys values)) fun-strings)))
+  (list t (mapcar (fun (funcall (compile nil (read-from-string _)) keys values nil)) fun-strings)))
 
-(defun rereduce (fun-strings reduce-results)
-  (list t (mapcar (fun (funcall (compile nil (read-from-string _)) reduce-results)) fun-strings)))
+(defun rereduce (fun-strings values)
+  (list t (mapcar (fun (funcall (compile nil (read-from-string _)) keys values t)) fun-strings)))
 
 (defun run-server (&aux *functions* (*package* (find-package :chillax-server)))
   (handler-case
