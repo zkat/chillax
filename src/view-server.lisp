@@ -19,10 +19,14 @@
   (loop for (key val) on keys-and-values by #'cddr do (setf (gethash key table) val)
      finally (return table)))
 
-(define-condition chillax-server-error () ())
+(define-condition chillax-server-error (error) ())
 (define-condition function-compilation-error (chillax-server-error)
   ((function-string :initarg :string :reader function-string)))
 
+(defvar *function-cache* (make-hash-table :test #'equal))
+(defun ensure-view-function (string)
+  (or (gethash string *function-cache*)
+      (compile-view-function string)))
 (defun compile-view-function (string)
   "Compiles an anonymous function from STRING."
   (multiple-value-bind (function warningsp failurep)
@@ -31,7 +35,7 @@
       (log-message "View function did not compile cleanly: ~A" (remove #\Newline string)))
     (if failurep
         (error 'function-compilation-error :string string)
-        function)))
+        (setf (gethash string *function-cache*) function))))
 
 (defvar *map-results*)
 (defun emit (key value)
@@ -52,14 +56,16 @@
 (defun add-fun (string)
   "Compiles and adds a function whose source code is in STRING to the current list of
 active CouchDB functions."
-  (push (with-user-package (compile-view-function string)) *functions*)
+  (push (with-user-package (ensure-view-function string)) *functions*)
   (respond t))
 
 (defun reset (&optional config)
   "Resets the view server. Any caches should be emptied at this point, and any stored
 map functions should be cleared out."
-  (declare (ignore config))
+  (when config
+   (log-message "Received configuration: ~A" config)) ;unhelpful, but I want to know if I got one.
   (setf *functions* nil)
+  (clrhash *function-cache*)
   (respond t))
 
 (defun call-map-function (function doc &aux *map-results*)
@@ -79,7 +85,7 @@ map functions should be cleared out."
      collect (caar result) into keys
      collect (cadr result) into values
      finally (respond (list t (mapcar (fun (with-user-package
-                                             (funcall (compile-view-function _)
+                                             (funcall (ensure-view-function _)
                                                       keys values nil)))
                                       fun-strings)))))
 
@@ -87,7 +93,7 @@ map functions should be cleared out."
   "Responds to CouchDB with the results of rereducing FUN-STRINGS on VALUES."
   ;; Should -definitely- cache the reduce functions. Recompiling all of these is insane.
   (respond (list t (mapcar (fun (with-user-package
-                                  (funcall (compile-view-function _) nil values t)))
+                                  (funcall (ensure-view-function _) nil values t)))
                            fun-strings))))
 
 (defun filter (docs req user-context)
@@ -104,7 +110,7 @@ map functions should be cleared out."
 
 (defun validate (fun-string new-doc old-doc user-context)
   (handler-case (with-user-package
-                  (funcall (compile-view-function fun-string) new-doc old-doc user-context)
+                  (funcall (ensure-view-function fun-string) new-doc old-doc user-context)
                   (respond "1")) ; the JS server does this. Cargo cult culture dictates
                                  ; that I should copy behavior regardless of understanding.
     (error (e)
