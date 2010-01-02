@@ -61,12 +61,12 @@
 (defun rereduce (fun-strings values)
   (respond (list t (mapcar (fun (funcall (compile-view-function _) nil values t)) fun-strings))))
 
-(defvar *dispatch*
-  '(("reset" . reset)
-    ("add_fun" . add-fun)
-    ("map_doc" . map-doc)
-    ("reduce" . reduce-map)
-    ("rereduce" . rereduce)
+(defparameter *dispatch*
+  `(("reset" . ,#'reset)
+    ("add_fun" . ,#'add-fun)
+    ("map_doc" . ,#'map-doc)
+    ("reduce" . ,#'reduce-map)
+    ("rereduce" . ,#'rereduce)
     ;; Not implemented
     ;; ("validate" . validate)
     ;; ("show" . show)
@@ -92,7 +92,7 @@
            (handler-case
                (let ((dispatch-result (assoc name *dispatch* :test #'string=)))
                  (if dispatch-result
-                     (apply (fdefinition (cdr dispatch-result)) args)
+                     (apply (cdr dispatch-result) args)
                      (progn
                        (couch-log "Unknown message: ~A" name)
                        (mkhash "error" "unknown_message"
