@@ -8,7 +8,7 @@
 (defvar *map-results*)
 (defvar *functions*)
 
-(defun equal-hash (&rest keys &aux (table (make-hash-table :test #'equal)))
+(defun mkhash (&rest keys &aux (table (make-hash-table :test #'equal)))
   (loop for (key val) on keys by #'cddr do (setf (gethash key table) val)
      finally (return table)))
 
@@ -96,9 +96,9 @@
                       (apply (fdefinition (cdr dispatch-result)) args)
                       (progn
                         (couch-log "Unknown message: ~A" name)
-                        (equal-hash "error" "unknown_message"
-                                    "reason" "Received an unknown message from CouchDB"))))
+                        (mkhash "error" "unknown_message"
+                                "reason" "Received an unknown message from CouchDB"))))
               (error (e)
-                (equal-hash "error" (princ-to-string (type-of e))
-                            "reason" (prin1-to-string e)))))
+                (mkhash "error" (princ-to-string (type-of e))
+                        "reason" (prin1-to-string e)))))
     (end-of-file () (values))))
