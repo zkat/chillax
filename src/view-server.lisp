@@ -87,7 +87,7 @@ with the source code to compile a function from."
 (defvar *map-results*)
 (defun emit (key value)
   "Adds an entry to the current map function results."
-  (when (boundp *map-results*) ;*map-results* is bound when the view server is started.
+  (when (boundp '*map-results*) ;*map-results* is bound when the view server is started.
     (push (list key value) *map-results*)))
 
 (defun mkhash (&rest keys-and-values &aux (table (make-hash-table :test #'equal)))
@@ -129,7 +129,7 @@ active CouchDB functions."
   "Resets the view server. Any caches should be emptied at this point, and any stored
 map functions should be cleared out."
   (setf *config* config)
-  (when (boundp *functions*)
+  (when (boundp '*functions*)
     (setf *functions* nil))
   (clrhash *function-cache*)
   (respond t))
