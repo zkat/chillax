@@ -5,6 +5,9 @@
   (:use :cl :chillax-server))
 (in-package :chillax-server)
 
+;;;
+;;; Utils
+;;;
 (defmacro with-user-package (&body body)
   "Evaluates BODY in the :chillax-server-user package."
   `(let ((*package* (find-package :chillax-server-user)))
@@ -14,37 +17,71 @@
   "This macro puts the FUN back in FUNCTION."
   `(lambda (&optional _) (declare (ignorable _)) ,@body))
 
-(defun mkhash (&rest keys-and-values &aux (table (make-hash-table :test #'equal)))
-  "Convenience function for `literal' hash table definition."
-  (loop for (key val) on keys-and-values by #'cddr do (setf (gethash key table) val)
-     finally (return table)))
-
+;;;
+;;; Conditions
+;;;
 (define-condition chillax-server-error (error) ())
+
 (define-condition function-compilation-error (chillax-server-error)
   ((function-string :initarg :string :reader function-string)))
 
-(defvar *function-cache* (make-hash-table :test #'equal))
-(defun ensure-view-function (string)
-  (or (gethash string *function-cache*)
-      (compile-view-function string)))
+(define-condition validation-failure (chillax-server-error)
+  ((message :initarg :message :reader failure-message))
+  (:report (lambda (c s) (format s "Validation failed: ~A" (failure-message c)))))
+
+(define-condition forbidden (validation-failure)
+  ()
+  (:report (lambda (c s) (format s "Operation Forbidden: ~A" (failure-message c)))))
+
+;;;
+;;; User functions
+;;;
+(defvar *functions*) ; holds a list of functions CouchDB is currently dealing with.
+(defvar *function-cache* (make-hash-table :test #'equal)
+  "Cache of compiled user functions. This is cleared whenever the reset command is run.")
+
+(defun ensure-view-function (maybe-function)
+  "Returns a compiled lisp function. MAYBE-FUNCTION can be a function object or a string
+with the source code to compile a function from."
+  (or (when (functionp maybe-function) maybe-function)
+      (gethash maybe-function *function-cache*)
+      (compile-view-function maybe-function)
+      (error "Can't return a function based on ~S" maybe-function)))
+
 (defun compile-view-function (string)
   "Compiles an anonymous function from STRING."
   (multiple-value-bind (function warningsp failurep)
-      (compile nil (read-from-string string))
+      (with-user-package
+        (compile nil (read-from-string string)))
     (when warningsp
       (log-message "View function did not compile cleanly: ~A" (remove #\Newline string)))
     (if failurep
         (error 'function-compilation-error :string string)
         (setf (gethash string *function-cache*) function))))
 
-(defun call-user-function (function-source &rest args)
-  (with-user-package (apply (ensure-view-function function-source) args)))
+(defun call-user-function (function &rest args)
+  (with-user-package (apply (ensure-view-function function) args)))
 
+(defun respond (response)
+  (handler-case
+      (json:encode response)
+    (error () (log-message "Error encoding response: ~A." response)))
+  (terpri)
+  (finish-output))
+
+;;;
+;;; User-accessible functions
+;;;
 (defvar *map-results*)
 (defun emit (key value)
   "Adds an entry to the current map function results."
-  (when (boundp *map-results*)
+  (when (boundp *map-results*) ;*map-results* is bound when the view server is started.
     (push (list key value) *map-results*)))
+
+(defun mkhash (&rest keys-and-values &aux (table (make-hash-table :test #'equal)))
+  "Convenience function for `literal' hash table definition."
+  (loop for (key val) on keys-and-values by #'cddr do (setf (gethash key table) val)
+     finally (return table)))
 
 (defun hashget (hash key &rest more-keys)
   "Convenience function for recursively accessing hash tables."
@@ -56,10 +93,13 @@
   (format t "~&[\"log\", Chillax View Server: ~S]~%" (apply #'format nil format-string format-args))
   (finish-output))
 
+;;;
+;;; CouchDB Commands
+;;;
 (defun add-fun (string)
   "Compiles and adds a function whose source code is in STRING to the current list of
 active CouchDB functions."
-  (push (with-user-package (ensure-view-function string)) *functions*)
+  (push (ensure-view-function string) *functions*)
   (respond t))
 
 (defun reset (&optional config)
@@ -67,13 +107,15 @@ active CouchDB functions."
 map functions should be cleared out."
   (when config
    (log-message "Received configuration: ~A" config)) ;unhelpful, but I want to know if I got one.
-  (setf *functions* nil)
+  (when (boundp *functions*) ;I like keeping the toplevel *functions* unbound...
+    (setf *functions* nil))
   (clrhash *function-cache*)
   (respond t))
 
 (defun call-map-function (function doc &aux *map-results*)
   "Calls a stored compile function on a document. *MAP-RESULTS* is where EMIT will send k/v pairs."
-  (with-user-package (funcall function doc)) (or *map-results* '(#())))
+  (call-user-function function doc)
+  (or *map-results* '(#())))
 
 (defun map-doc (doc)
   "Responds to CouchDB with the results of calling all the currently-active map functions on DOC."
@@ -81,9 +123,6 @@ map functions should be cleared out."
 
 (defun reduce-results (fun-strings keys-and-values)
   "Responds to CouchDb with the results of calling the functions in FUN-STRINGS on KEYS-AND-VALUES."
-  ;; It's quite possible a good idea to cache the compiled version of these functions in a hash
-  ;; table, indexed by their source string. The cache will be cleared out whenever couch asks for
-  ;; a ["reset"].
   (loop for result in keys-and-values
      collect (caar result) into keys
      collect (cadr result) into values
@@ -98,36 +137,32 @@ map functions should be cleared out."
 (defun filter (docs req user-context)
   "Responds to CouchDB with the result of filtering DOCS using the current filter function."
   ;; Yes. I know it only uses the first function only. The JS view server does the same thing.
-  (respond (list t (mapcar (fun (with-user-package
-                                  (funcall (car *functions*) _ req user-context))) docs))))
-
-(define-condition validation-failure (error)
-  ((message :initarg :message :reader failure-message))
-  (:report (lambda (c s) (format s "Validation failed: ~A" (failure-message c)))))
-(define-condition forbidden (validation-failure)
-  ()
-  (:report (lambda (c s) (format s "Operation Forbidden: ~A" (failure-message c)))))
+  (respond (list t (mapcar (fun (call-user-function (car *functions*) _ req user-context)) docs))))
 
 (defun validate (fun-string new-doc old-doc user-context)
-  (handler-case (with-user-package
-                  (funcall (ensure-view-function fun-string) new-doc old-doc user-context)
+  "Executes a view function that validates NEW-DOC as a new version of OLD-DOC.
+Validation passes when the function returns normally. Validation will fail if the function errors in
+any way, and the condition's name and printout will be send to CouchDB as the exception."
+  (handler-case (progn
+                  (call-user-function fun-string new-doc old-doc user-context)
                   (respond "1")) ; the JS server does this. Cargo cult culture dictates
                                  ; that I should copy behavior regardless of understanding.
     (error (e)
       (respond (mkhash (string-downcase (princ-to-string (type-of e)))
                        (remove #\Newline (princ-to-string e)))))))
 
-
-
-;;;
-;;; Rendering
-;;;
 (defun show (fun-string doc request)
+  "Show functions are used to render documents. See CouchDB documentation for more details."
   (respond (list "resp" (call-user-function fun-string doc request))))
 
 (defun update (fun-string doc request)
+  "See CouchDB documentation for how to use _update. Functions written for the Chillax view server
+should return (values document response)."
   (respond (apply #'list* "up" (multiple-value-list (call-user-function fun-string doc request)))))
 
+;;;
+;;; View server
+;;;
 (defparameter *dispatch*
   `(("reset" . ,#'reset)
     ("add_fun" . ,#'add-fun)
@@ -143,14 +178,6 @@ map functions should be cleared out."
     )
   "Dispatch table holding Couch command -> Chillax function associations.")
 
-(defun respond (response)
-  (handler-case
-      (json:encode response)
-    (error () (log-message "Error encoding response: ~A." response)))
-  (terpri)
-  (finish-output))
-
-(defvar *functions*)
 (defun run-server (&aux *functions*
                    (black-hole (make-broadcast-stream))
                    (*error-output* black-hole)
