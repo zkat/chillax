@@ -42,7 +42,7 @@
     (reduce #'hashget more-keys :initial-value (gethash key hash))))
 
 (defun log-message (format-string &rest format-args)
-  (format t "~&[\"log\", ~S]~%" (apply #'format nil format-string format-args))
+  (format t "~&[\"log\", Chillax View Server: ~S]~%" (apply #'format nil format-string format-args))
   (finish-output))
 
 (defun add-fun (string)
