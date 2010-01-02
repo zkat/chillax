@@ -98,6 +98,6 @@
                        (mkhash "error" "unknown_message"
                                "reason" "Received an unknown message from CouchDB"))))
              (error (e)
-               (mkhash "error" (princ-to-string (type-of e))
-                       "reason" (prin1-to-string e)))))
+               (respond (mkhash "error" (princ-to-string (type-of e))
+                                "reason" (prin1-to-string e))))))
     (end-of-file () (values))))
