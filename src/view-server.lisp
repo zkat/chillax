@@ -97,13 +97,7 @@ with the source code to compile a function from."
 
 (defun hashget (hash &rest keys)
   "Convenience function for recursively accessing hash tables."
-  (flet ((hashget-helper (hash key)
-           ;; Note that check-type's restart doesn't actually store the new
-           ;; value anywhere useful in this case. Should this use ASSERT?
-           (check-type hash hash-table)
-           (gethash key hash)))
-    (declare (dynamic-extent #'hashget-helper))
-    (reduce #'hashget-helper keys :initial-value hash)))
+  (reduce (lambda (h k) (gethash k h)) keys :initial-value hash))
 
 (define-compiler-macro hashget (hash &rest keys)
   (if (null keys) hash
