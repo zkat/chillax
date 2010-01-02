@@ -90,7 +90,8 @@ with the source code to compile a function from."
 
 (defun log-message (format-string &rest format-args)
   "Like FORMAT, but the resulting string is written to CouchDB's log."
-  (format t "~&[\"log\", \"Chillax View Server: ~A\"]~%" (apply #'format nil format-string format-args))
+  (format t "~&[\"log\", \"Chillax View Server: ~A\"]~%"
+          (apply #'format nil format-string format-args))
   (finish-output))
 
 ;;;
@@ -106,7 +107,7 @@ active CouchDB functions."
   "Resets the view server. Any caches should be emptied at this point, and any stored
 map functions should be cleared out."
   (when config
-   (log-message "Received configuration: ~A" config)) ;unhelpful, but I want to know if I got one.
+    #+nil(log-message "Received configuration: ~S" config))
   (when (boundp *functions*) ;I like keeping the toplevel *functions* unbound...
     (setf *functions* nil))
   (clrhash *function-cache*)
