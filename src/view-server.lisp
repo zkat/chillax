@@ -51,7 +51,7 @@
 
 (defun add-fun (string)
   "Compiles and adds a function whose source code is in STRING to the current list of
-active CouchDB map functions."
+active CouchDB functions."
   (push (with-user-package (compile-view-function string)) *functions*)
   (respond t))
 
@@ -90,18 +90,23 @@ map functions should be cleared out."
                                   (funcall (compile-view-function _) nil values t)))
                            fun-strings))))
 
+(defun filter (docs req user-context)
+  "Responds to CouchDB with the result of filtering DOCS using the current filter function."
+  ;; Yes. I know it only uses the first function only. The JS view server does the same thing.
+  (respond (list t (mapcar (fun (funcall (car *functions*) _ req user-context)) docs))))
+
 (defparameter *dispatch*
   `(("reset" . ,#'reset)
     ("add_fun" . ,#'add-fun)
     ("map_doc" . ,#'map-doc)
     ("reduce" . ,#'reduce-results)
     ("rereduce" . ,#'rereduce)
+    ("filter" . filter)
     ;; Not implemented
     ;; ("validate" . validate)
     ;; ("show" . show)
     ;; ("update" . update)
     ;; ("list" . couch-list)
-    ;; ("filter" . filter)
     )
   "Dispatch table holding Couch command -> Chillax function associations.")
 
