@@ -90,7 +90,7 @@ with the source code to compile a function from."
 
 (defun log-message (format-string &rest format-args)
   "Like FORMAT, but the resulting string is written to CouchDB's log."
-  (format t "~&[\"log\", Chillax View Server: ~S]~%" (apply #'format nil format-string format-args))
+  (format t "~&[\"log\", \"Chillax View Server: ~A\"]~%" (apply #'format nil format-string format-args))
   (finish-output))
 
 ;;;
