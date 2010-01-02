@@ -47,6 +47,7 @@
 ;;;
 ;;; User functions
 ;;;
+(defvar *config* nil)
 (defvar *functions*) ; holds a list of functions CouchDB is currently dealing with.
 (defvar *function-cache* (make-hash-table :test #'equal)
   "Cache of compiled user functions. This is cleared whenever the reset command is run.")
@@ -117,8 +118,7 @@ active CouchDB functions."
 (defun reset (&optional config)
   "Resets the view server. Any caches should be emptied at this point, and any stored
 map functions should be cleared out."
-  (when config
-    #+nil(log-message "Received configuration: ~S" config))
+  (setf *config* config)
   (when (boundp *functions*)
     (setf *functions* nil))
   (clrhash *function-cache*)
