@@ -95,10 +95,15 @@ with the source code to compile a function from."
   (loop for (key val) on keys-and-values by #'cddr do (setf (gethash key table) val)
      finally (return table)))
 
-(defun hashget (hash key &rest more-keys)
+(defun hashget (hash &rest keys)
   "Convenience function for recursively accessing hash tables."
-  (flet ((reverse-gethash (hash key) (gethash key hash)))
-    (reduce #'reverse-gethash more-keys :initial-value (gethash key hash))))
+  (flet ((hashget-helper (hash key)
+           ;; Note that check-type's restart doesn't actually store the new
+           ;; value anywhere useful in this case. Should this use ASSERT?
+           (check-type hash hash-table)
+           (gethash key hash)))
+    (declare (dynamic-extent #'hashget-helper))
+    (reduce #'hashget-helper keys :initial-value hash)))
 
 (defun (setf hashget) (new-value hash key &rest more-keys)
   "Uses the last key given to hashget to insert NEW-VALUE into the hash table
