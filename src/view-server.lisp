@@ -66,7 +66,7 @@ with the source code to compile a function from."
       (with-user-package
         (compile nil (read-from-string string)))
     (when warningsp
-      (log-message "View function did not compile cleanly: ~S" string))
+      (log-message "View function did not compile cleanly."))
     (if failurep
         (error 'function-compilation-error :string string)
         (setf (gethash string *function-cache*) function))))
