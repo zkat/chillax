@@ -125,6 +125,9 @@ map functions should be cleared out."
 (defun show (fun-string doc request)
   (respond (list "resp" (call-user-function fun-string doc request))))
 
+(defun update (fun-string doc request)
+  (respond (apply #'list* "up" (multiple-value-list (call-user-function fun-string doc request)))))
+
 (defparameter *dispatch*
   `(("reset" . ,#'reset)
     ("add_fun" . ,#'add-fun)
@@ -134,8 +137,8 @@ map functions should be cleared out."
     ("filter" . filter)
     ("validate" . validate)
     ("show" . show)
+    ("update" . update)
     ;; Not implemented
-    ;; ("update" . update)
     ;; ("list" . couch-list)
     )
   "Dispatch table holding Couch command -> Chillax function associations.")
