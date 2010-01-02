@@ -1,12 +1,17 @@
-(defpackage #:chillax-server (:use :cl))
+(defpackage #:chillax-server
+  (:use :cl)
+  (:export :mkhash :emit))
+(defpackage #:chillax-server-user
+  (:use :cl :chillax-server))
 (in-package :chillax-server)
+
+(defmacro with-user-package (&body body)
+  `(let ((*package* (find-package :chillax-server-user)))
+     ,@body))
 
 (defmacro fun (&body body)
   "This macro puts the FUN back in FUNCTION."
   `(lambda (&optional _) (declare (ignorable _)) ,@body))
-
-(defvar *map-results*)
-(defvar *functions*)
 
 (defun mkhash (&rest keys &aux (table (make-hash-table :test #'equal)))
   (loop for (key val) on keys by #'cddr do (setf (gethash key table) val)
@@ -27,6 +32,7 @@
         (error 'function-compilation-error :string string)
         function)))
 
+(defvar *map-results*)
 (defun emit (k v)
   (when (boundp *map-results*)
     (push (list k v) *map-results*)))
@@ -36,7 +42,7 @@
   (finish-output))
 
 (defun add-fun (string)
-  (push (compile-view-function string) *functions*)
+  (push (with-user-package (compile-view-function string)) *functions*)
   (respond t))
 
 (defun reset (&optional config)
@@ -45,7 +51,7 @@
   (respond t))
 
 (defun call-map-function (function doc &aux *map-results*)
-  (funcall function doc) (or *map-results* '(#())))
+  (with-user-package (funcall function doc)) (or *map-results* '(#())))
 
 (defun map-doc (doc)
   (respond (or (mapcar (fun (call-map-function _ doc)) *functions*) '((#())))))
@@ -54,12 +60,14 @@
   (loop for result in keys-and-values
      collect (caar result) into keys
      collect (cadr result) into values
-     finally (respond (list t (mapcar (fun (funcall (compile-view-function _)
-                                                    keys values nil))
+     finally (respond (list t (mapcar (fun (with-user-package
+                                             (funcall (compile-view-function _)
+                                                      keys values nil)))
                                       fun-strings)))))
 
 (defun rereduce (fun-strings values)
-  (respond (list t (mapcar (fun (funcall (compile-view-function _) nil values t)) fun-strings))))
+  (respond (list t (mapcar (fun (with-user-package
+                                  (funcall (compile-view-function _) nil values t))) fun-strings))))
 
 (defparameter *dispatch*
   `(("reset" . ,#'reset)
@@ -82,7 +90,8 @@
   (terpri)
   (finish-output))
 
-(defun run-server (&aux *functions* (*package* (find-package :chillax-server))
+(defvar *functions*)
+(defun run-server (&aux *functions*
                    (black-hole (make-broadcast-stream))
                    (*error-output* black-hole)
                    (*debug-io* black-hole)
