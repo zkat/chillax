@@ -117,6 +117,13 @@ map functions should be cleared out."
       (respond (mkhash (string-downcase (princ-to-string (type-of e)))
                        (remove #\Newline (princ-to-string e)))))))
 
+;;;
+;;; Rendering
+;;;
+(defun show (fun-string doc request)
+  (respond (list "resp" (with-user-package (funcall (ensure-view-function fun-string) doc request)))))
+
+
 (defparameter *dispatch*
   `(("reset" . ,#'reset)
     ("add_fun" . ,#'add-fun)
@@ -125,8 +132,8 @@ map functions should be cleared out."
     ("rereduce" . ,#'rereduce)
     ("filter" . filter)
     ("validate" . validate)
+    ("show" . show)
     ;; Not implemented
-    ;; ("show" . show)
     ;; ("update" . update)
     ;; ("list" . couch-list)
     )
