@@ -1,6 +1,6 @@
 (defpackage #:chillax-server
   (:use :cl)
-  (:export :mkhash :emit :@ :log-message))
+  (:export :mkhash :emit :hashget :log-message))
 (defpackage #:chillax-server-user
   (:use :cl :chillax-server))
 (in-package :chillax-server)
@@ -39,10 +39,10 @@
   (when (boundp *map-results*)
     (push (list key value) *map-results*)))
 
-(defun @ (hash key &rest more-keys)
+(defun hashget (hash key &rest more-keys)
   "Convenience function for recursively accessing hash tables."
- (flet ((hashget (hash key) (gethash key hash)))
-    (reduce #'hashget more-keys :initial-value (gethash key hash))))
+  (flet ((reverse-gethash (hash key) (gethash key hash)))
+    (reduce #'reverse-gethash more-keys :initial-value (gethash key hash))))
 
 (defun log-message (format-string &rest format-args)
   "Like FORMAT, but the resulting string is written to CouchDB's log."
