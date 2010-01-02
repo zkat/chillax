@@ -38,7 +38,10 @@
 (defun add-fun (string)
   (push (compile-view-function string) *functions*) t)
 
-(defun reset () (setf *functions* nil) t)
+(defun reset (&optional config)
+  (declare (ignore config))
+  (setf *functions* nil)
+  t)
 
 (defun call-map-function (function doc &aux *map-results*)
   (funcall function doc) (or *map-results* '(#())))
