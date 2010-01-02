@@ -1,6 +1,6 @@
 (defpackage #:chillax-server
   (:use :cl)
-  (:export :mkhash :emit :@))
+  (:export :mkhash :emit :@ :log-message))
 (defpackage #:chillax-server-user
   (:use :cl :chillax-server))
 (in-package :chillax-server)
@@ -26,7 +26,7 @@
   (multiple-value-bind (function warningsp failurep)
       (compile nil (read-from-string string))
     (when warningsp
-      (couch-log "View function did not compile cleanly: ~A" (remove #\Newline string)))
+      (log-message "View function did not compile cleanly: ~A" (remove #\Newline string)))
     (if failurep
         ;; FIXME: This is basically a constant.
         (error 'function-compilation-error :string string)
@@ -41,7 +41,7 @@
   (flet ((hashget (hash key) (gethash key hash)))
     (reduce #'hashget more-keys :initial-value (gethash key hash))))
 
-(defun couch-log (format-string &rest format-args)
+(defun log-message (format-string &rest format-args)
   (format t "~&[\"log\", ~S]~%" (apply #'format nil format-string format-args))
   (finish-output))
 
@@ -90,7 +90,7 @@
 (defun respond (response)
   (handler-case
       (json:encode response)
-    (error () (couch-log "Error encoding response: ~A." response)))
+    (error () (log-message "Error encoding response: ~A." response)))
   (terpri)
   (finish-output))
 
@@ -107,7 +107,7 @@
                  (if dispatch-result
                      (apply (cdr dispatch-result) args)
                      (progn
-                       (couch-log "Unknown message: ~A" name)
+                       (log-message "Unknown message: ~A" name)
                        (mkhash "error" "unknown_message"
                                "reason" "Received an unknown message from CouchDB"))))
              (error (e)
