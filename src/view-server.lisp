@@ -36,30 +36,30 @@
   (finish-output))
 
 (defun add-fun (string)
-  (push (compile-view-function string) *functions*) t)
+  (push (compile-view-function string) *functions*)
+  (respond t))
 
 (defun reset (&optional config)
   (declare (ignore config))
   (setf *functions* nil)
-  t)
+  (respond t))
 
 (defun call-map-function (function doc &aux *map-results*)
   (funcall function doc) (or *map-results* '(#())))
 
 (defun map-doc (doc)
-  (or (mapcar (fun (call-map-function _ doc)) *functions*) '((#()))))
+  (respond (or (mapcar (fun (call-map-function _ doc)) *functions*) '((#())))))
 
 (defun reduce-map (fun-strings keys-and-values)
   (loop for result in keys-and-values
      collect (caar result) into keys
      collect (cadr result) into values
-     finally (return
-               (list t (mapcar (fun (funcall (compile-view-function _)
-                                             keys values nil))
-                               fun-strings)))))
+     finally (respond (list t (mapcar (fun (funcall (compile-view-function _)
+                                                    keys values nil))
+                                      fun-strings)))))
 
 (defun rereduce (fun-strings values)
-  (list t (mapcar (fun (funcall (compile-view-function _) nil values t)) fun-strings)))
+  (respond (list t (mapcar (fun (funcall (compile-view-function _) nil values t)) fun-strings))))
 
 (defvar *dispatch*
   '(("reset" . reset)
@@ -75,6 +75,13 @@
     ;; ("filter" . filter)
     ))
 
+(defun respond (response)
+  (handler-case
+      (json:encode response)
+    (error () (couch-log "Error encoding response: ~A." response)))
+  (terpri)
+  (finish-output))
+
 (defun run-server (&aux *functions* (*package* (find-package :chillax-server))
                    (black-hole (make-broadcast-stream))
                    (*error-output* black-hole)
@@ -83,18 +90,15 @@
   (handler-case
       (loop for input = (read-line)
          for (name . args) = (json:parse input)
-         do (json:encode
-             (handler-case
-                 (let ((dispatch-result (assoc name *dispatch* :test #'string=)))
-                   (if dispatch-result
-                       (apply (fdefinition (cdr dispatch-result)) args)
-                       (progn
-                         (couch-log "Unknown message: ~A" name)
-                         (equal-hash "error" "unknown_message"
-                                     "reason" "Received an unknown message from CouchDB"))))
-               (error (e)
-                 (equal-hash "error" (princ-to-string (type-of e))
-                             "reason" (prin1-to-string e)))))
-         (terpri)
-         (finish-output))
+         do (handler-case
+                (let ((dispatch-result (assoc name *dispatch* :test #'string=)))
+                  (if dispatch-result
+                      (apply (fdefinition (cdr dispatch-result)) args)
+                      (progn
+                        (couch-log "Unknown message: ~A" name)
+                        (equal-hash "error" "unknown_message"
+                                    "reason" "Received an unknown message from CouchDB"))))
+              (error (e)
+                (equal-hash "error" (princ-to-string (type-of e))
+                            "reason" (prin1-to-string e)))))
     (end-of-file () (values))))
