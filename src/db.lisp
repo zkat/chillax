@@ -132,7 +132,9 @@ of the keyword arguments for drakma:http-request are available as kwargs for thi
     "This special :around reply wraps the standard =server= reply and encodes/decodes JSON
 where appropriate, which makes for a nicer Lisp-side API."
     (multiple-value-bind (response status-code)
-        (apply #'call-next-reply server uri :content (when contentp (json:encode content)) all-keys)
+        (apply #'call-next-reply server uri :content (when contentp
+                                                       (with-output-to-string (s)
+                                                         (json:encode content s))) all-keys)
       (values (json:parse response) status-code))))
 
 (defun all-dbs (server)
