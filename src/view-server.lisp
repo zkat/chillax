@@ -100,6 +100,16 @@ with the source code to compile a function from."
   (flet ((reverse-gethash (hash key) (gethash key hash)))
     (reduce #'reverse-gethash more-keys :initial-value (gethash key hash))))
 
+(defun (setf hashget) (new-value hash key &rest more-keys)
+  "Uses the last key given to hashget to insert NEW-VALUE into the hash table
+returned by the second-to-last key.
+tl;dr: DWIM SETF function for HASHGET."
+  (if more-keys
+      (setf (gethash (car (last more-keys))
+                     (apply #'hashget hash key (butlast more-keys)))
+            new-value)
+      (setf (gethash key hash) new-value)))
+
 (defun log-message (format-string &rest format-args)
   "Like FORMAT, but the resulting string is written to CouchDB's log."
   (format t "~&[\"log\", \"Chillax View Server: ~A\"]~%"
