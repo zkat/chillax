@@ -179,7 +179,7 @@ any way, and the condition's name and printout will be send to CouchDB as the ex
 (defun update (fun-string doc request)
   "See CouchDB documentation for how to use _update. Functions written for the Chillax view server
 should return (values document response)."
-  (respond (list* "up" (multiple-value-list (call-user-function fun-string doc request)))))
+  (respond (multiple-value-call #'list "up" (call-user-function fun-string doc request))))
 
 ;;;
 ;;; View server
