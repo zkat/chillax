@@ -37,6 +37,9 @@
         (error 'function-compilation-error :string string)
         (setf (gethash string *function-cache*) function))))
 
+(defun call-user-function (function-source &rest args)
+  (with-user-package (apply (ensure-view-function function-source) args)))
+
 (defvar *map-results*)
 (defun emit (key value)
   "Adds an entry to the current map function results."
@@ -84,22 +87,19 @@ map functions should be cleared out."
   (loop for result in keys-and-values
      collect (caar result) into keys
      collect (cadr result) into values
-     finally (respond (list t (mapcar (fun (with-user-package
-                                             (funcall (ensure-view-function _)
-                                                      keys values nil)))
+     finally (respond (list t (mapcar (fun (call-user-function _ keys values nil))
                                       fun-strings)))))
 
 (defun rereduce (fun-strings values)
   "Responds to CouchDB with the results of rereducing FUN-STRINGS on VALUES."
   ;; Should -definitely- cache the reduce functions. Recompiling all of these is insane.
-  (respond (list t (mapcar (fun (with-user-package
-                                  (funcall (ensure-view-function _) nil values t)))
-                           fun-strings))))
+  (respond (list t (mapcar (fun (call-user-function _ nil values t)) fun-strings))))
 
 (defun filter (docs req user-context)
   "Responds to CouchDB with the result of filtering DOCS using the current filter function."
   ;; Yes. I know it only uses the first function only. The JS view server does the same thing.
-  (respond (list t (mapcar (fun (funcall (car *functions*) _ req user-context)) docs))))
+  (respond (list t (mapcar (fun (with-user-package
+                                  (funcall (car *functions*) _ req user-context))) docs))))
 
 (define-condition validation-failure (error)
   ((message :initarg :message :reader failure-message))
@@ -117,12 +117,13 @@ map functions should be cleared out."
       (respond (mkhash (string-downcase (princ-to-string (type-of e)))
                        (remove #\Newline (princ-to-string e)))))))
 
+
+
 ;;;
 ;;; Rendering
 ;;;
 (defun show (fun-string doc request)
-  (respond (list "resp" (with-user-package (funcall (ensure-view-function fun-string) doc request)))))
-
+  (respond (list "resp" (call-user-function fun-string doc request))))
 
 (defparameter *dispatch*
   `(("reset" . ,#'reset)
