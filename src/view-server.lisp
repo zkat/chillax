@@ -192,8 +192,8 @@ should return (values document response)."
                      (apply (cdr dispatch-result) args)
                      (progn
                        (log-message "Unknown message: ~A" name)
-                       (mkhash "error" "unknown_message"
-                               "reason" "Received an unknown message from CouchDB"))))
+                       (respond (mkhash "error" "unknown_message"
+                                        "reason" "Received an unknown message from CouchDB")))))
              (error (e)
                (respond (mkhash "error" (princ-to-string (type-of e))
                                 "reason" (remove #\Newline (princ-to-string e)))))))
