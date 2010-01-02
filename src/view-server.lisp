@@ -88,17 +88,16 @@
                    (*debug-io* black-hole)
                    (*trace-output* black-hole))
   (handler-case
-      (loop for input = (read-line)
-         for (name . args) = (json:parse input)
-         do (handler-case
-                (let ((dispatch-result (assoc name *dispatch* :test #'string=)))
-                  (if dispatch-result
-                      (apply (fdefinition (cdr dispatch-result)) args)
-                      (progn
-                        (couch-log "Unknown message: ~A" name)
-                        (mkhash "error" "unknown_message"
-                                "reason" "Received an unknown message from CouchDB"))))
-              (error (e)
-                (mkhash "error" (princ-to-string (type-of e))
-                        "reason" (prin1-to-string e)))))
+      (loop for (name . args) = (json:parse (read-line)) do
+           (handler-case
+               (let ((dispatch-result (assoc name *dispatch* :test #'string=)))
+                 (if dispatch-result
+                     (apply (fdefinition (cdr dispatch-result)) args)
+                     (progn
+                       (couch-log "Unknown message: ~A" name)
+                       (mkhash "error" "unknown_message"
+                               "reason" "Received an unknown message from CouchDB"))))
+             (error (e)
+               (mkhash "error" (princ-to-string (type-of e))
+                       "reason" (prin1-to-string e)))))
     (end-of-file () (values))))
