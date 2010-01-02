@@ -1,16 +1,27 @@
 (defpackage #:chillax-server
   (:use :cl)
-  (:export :mkhash :emit :hashget :log-message :validation-failure :forbidden))
+  (:export :mkhash :emit :hashget :log-message :validation-failure :forbidden
+           :*user-package* :*encode-json* :*decode-json*))
 (defpackage #:chillax-server-user
   (:use :cl :chillax-server))
 (in-package :chillax-server)
+
+;;;
+;;; Configuration
+;;;
+(defparameter *user-package* (find-package :chillax-server-user)
+  "Package that user view functions will be compiled and executed in.")
+(defparameter *encode-json* #'json:encode
+  "Function to use when encoding Lisp->JSON. Must return a string.")
+(defparameter *decode-json* #'json:parse
+  "Function to use to decode JSON->Lisp. Must accept a string.")
 
 ;;;
 ;;; Utils
 ;;;
 (defmacro with-user-package (&body body)
   "Evaluates BODY in the :chillax-server-user package."
-  `(let ((*package* (find-package :chillax-server-user)))
+  `(let ((*package* *user-package*))
      ,@body))
 
 (defmacro fun (&body body)
@@ -64,7 +75,7 @@ with the source code to compile a function from."
 
 (defun respond (response)
   (handler-case
-      (json:encode response)
+      (funcall *encode-json* response)
     (error () (log-message "Error encoding response: ~A." response)))
   (terpri)
   (finish-output))
@@ -108,7 +119,7 @@ active CouchDB functions."
 map functions should be cleared out."
   (when config
     #+nil(log-message "Received configuration: ~S" config))
-  (when (boundp *functions*) ;I like keeping the toplevel *functions* unbound...
+  (when (boundp *functions*)
     (setf *functions* nil))
   (clrhash *function-cache*)
   (respond t))
@@ -132,7 +143,6 @@ map functions should be cleared out."
 
 (defun rereduce (fun-strings values)
   "Responds to CouchDB with the results of rereducing FUN-STRINGS on VALUES."
-  ;; Should -definitely- cache the reduce functions. Recompiling all of these is insane.
   (respond (list t (mapcar (fun (call-user-function _ nil values t)) fun-strings))))
 
 (defun filter (docs req user-context)
@@ -186,7 +196,7 @@ should return (values document response)."
                    (*trace-output* black-hole))
   "Toplevel function that parses view requests from CouchDB and sends responses back."
   (handler-case
-      (loop for (name . args) = (json:parse (read-line)) do
+      (loop for (name . args) = (funcall *decode-json* (read-line)) do
            (handler-case
                (let ((dispatch-result (assoc name *dispatch* :test #'string=)))
                  (if dispatch-result
