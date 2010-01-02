@@ -182,9 +182,14 @@ any way, and the condition's name and printout will be send to CouchDB as the ex
       (respond (mkhash (string-downcase (princ-to-string (type-of e)))
                        (remove #\Newline (princ-to-string e)))))))
 
+(defun ensure-response (maybe-response)
+  (if (hash-table-p maybe-response)
+      maybe-response
+      (mkhash "body" (princ-to-string maybe-response))))
+
 (defun show (fun-string doc request)
   "Show functions are used to render documents. See CouchDB documentation for more details."
-  (respond (list "resp" (call-user-function fun-string doc request))))
+  (respond (list "resp" (ensure-response (call-user-function fun-string doc request)))))
 
 (defun update (fun-string doc request)
   "See CouchDB documentation for how to use _update. Functions written for the Chillax view server
