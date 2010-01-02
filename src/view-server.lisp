@@ -1,6 +1,6 @@
 (defpackage #:chillax-server
   (:use :cl)
-  (:export :mkhash :emit :hashget :log-message))
+  (:export :mkhash :emit :hashget :log-message :validation-failure :forbidden))
 (defpackage #:chillax-server-user
   (:use :cl :chillax-server))
 (in-package :chillax-server)
@@ -95,6 +95,22 @@ map functions should be cleared out."
   ;; Yes. I know it only uses the first function only. The JS view server does the same thing.
   (respond (list t (mapcar (fun (funcall (car *functions*) _ req user-context)) docs))))
 
+(define-condition validation-failure (error)
+  ((message :initarg :message :reader failure-message))
+  (:report (lambda (c s) (format s "Validation failed: ~A" (failure-message c)))))
+(define-condition forbidden (validation-failure)
+  ()
+  (:report (lambda (c s) (format s "Operation Forbidden: ~A" (failure-message c)))))
+
+(defun validate (fun-string new-doc old-doc user-context)
+  (handler-case (with-user-package
+                  (funcall (compile-view-function fun-string) new-doc old-doc user-context)
+                  (respond "1")) ; the JS server does this. Cargo cult culture dictates
+                                 ; that I should copy behavior regardless of understanding.
+    (error (e)
+      (respond (mkhash (string-downcase (princ-to-string (type-of e)))
+                       (remove #\Newline (princ-to-string e)))))))
+
 (defparameter *dispatch*
   `(("reset" . ,#'reset)
     ("add_fun" . ,#'add-fun)
@@ -102,8 +118,8 @@ map functions should be cleared out."
     ("reduce" . ,#'reduce-results)
     ("rereduce" . ,#'rereduce)
     ("filter" . filter)
+    ("validate" . validate)
     ;; Not implemented
-    ;; ("validate" . validate)
     ;; ("show" . show)
     ;; ("update" . update)
     ;; ("list" . couch-list)
@@ -136,5 +152,5 @@ map functions should be cleared out."
                                "reason" "Received an unknown message from CouchDB"))))
              (error (e)
                (respond (mkhash "error" (princ-to-string (type-of e))
-                                "reason" (prin1-to-string e))))))
+                                "reason" (remove #\Newline (princ-to-string e)))))))
     (end-of-file () (values))))
