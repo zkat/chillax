@@ -105,6 +105,17 @@ with the source code to compile a function from."
     (declare (dynamic-extent #'hashget-helper))
     (reduce #'hashget-helper keys :initial-value hash)))
 
+(define-compiler-macro hashget (hash &rest keys)
+  (if (null keys) hash
+      (let ((hash-sym (make-symbol "HASH"))
+            (key-syms (loop for i below (length keys)
+                         collect (make-symbol (format nil "~:@(~:R~)-KEY" i)))))
+        `(let ((,hash-sym ,hash)
+               ,@(loop for key in keys for sym in key-syms
+                    collect `(,sym ,key)))
+           ,(reduce (lambda (hash key) `(gethash ,key ,hash))
+                    key-syms :initial-value hash-sym)))))
+
 (defun (setf hashget) (new-value hash key &rest more-keys)
   "Uses the last key given to hashget to insert NEW-VALUE into the hash table
 returned by the second-to-last key.
