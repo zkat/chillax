@@ -34,7 +34,8 @@
 (define-condition chillax-server-error (error) ())
 
 (define-condition function-compilation-error (chillax-server-error)
-  ((function-string :initarg :string :reader function-string)))
+  ((function-string :initarg :string :reader function-string))
+  (:report (lambda (c s) (format s "Function compilation failed: ~A" (function-string c)))))
 
 (define-condition validation-failure (chillax-server-error)
   ((message :initarg :message :reader failure-message))
@@ -66,7 +67,7 @@ with the source code to compile a function from."
       (with-user-package
         (compile nil (read-from-string string)))
     (when warningsp
-      (log-message "View function did not compile cleanly."))
+      (log-message "A view function did not compile cleanly."))
     (if failurep
         (error 'function-compilation-error :string string)
         (setf (gethash string *function-cache*) function))))
