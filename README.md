@@ -8,4 +8,4 @@ chillax also includes a CouchDB view server, which can be made with make-chillax
 YASON Problem
 =============
 
-Note that, at least on some systems, it's necessary to edit YASON's parse.lisp file (line 72) to include #\Return. Sorry for any inconvenience.
+Note that, at least on some systems, versions of [YASON](http://github.com/hanshuebner/Yason) prior to commit [00b9a5c06b7c4113a48518a1f136637efb4458b9](http://github.com/hanshuebner/Yason/commit/00b9a5c06b7c4113a48518a1f136637efb4458b9) will not work (in this commit, #\Return was added to the list of whitespace characters recognized). Using these versions instead of 0.1 is recommended anyway for performance reasons.
