@@ -1,6 +1,12 @@
 (cl:defpackage #:chillax
-  (:use :cl :flexi-streams :drakma :alexandria)
+  (:use :cl :flexi-streams :drakma :alexandria :chillax.utils)
   (:export
+
+   ;; Handy utils
+   :mkhash
+   :hashget
+   :fun
+   :strcat
 
    ;; Conditions
    :couchdb-error :unexpected-response :database-error
