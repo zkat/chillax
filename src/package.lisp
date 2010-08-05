@@ -1,5 +1,5 @@
 (cl:defpackage #:chillax
-  (:use :cl :sheeple :flexi-streams :drakma)
+  (:use :cl :sheeple :flexi-streams :drakma :alexandria)
   (:nicknames :chill)
   (:export
 
