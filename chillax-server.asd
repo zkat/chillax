@@ -10,4 +10,5 @@
   ((:module src
             :serial t
             :components
-            ((:file "view-server")))))
+            ((:file "utils")
+             (:file "view-server")))))
