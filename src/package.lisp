@@ -24,12 +24,12 @@
    :server :name
    :db-request
    :db-info
-   :connect-to-db
-   :create-db
+   :db-connect
+   :db-create
    :ensure-db
-   :delete-db
-   :compact-db
-   :changes
+   :db-delete
+   :db-compact
+   :db-changes
 
    ;; Documents API
    :get-document
