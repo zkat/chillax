@@ -1,6 +1,5 @@
 (cl:defpackage #:chillax
-  (:use :cl :sheeple :flexi-streams :drakma :alexandria)
-  (:nicknames :chill)
+  (:use :cl :flexi-streams :drakma :alexandria)
   (:export
 
    ;; Conditions
@@ -9,9 +8,9 @@
    :document-not-found :document-conflict
 
    ;; Server API
-   :=server=
+   :server
    :host :port :username :password
-   :=json-server=
+   :json-server
    :couch-request
    :all-dbs
    :config-info
@@ -21,7 +20,7 @@
    :get-uuids
 
    ;; Database API
-   :=database=
+   :database
    :server :name
    :db-request
    :db-info

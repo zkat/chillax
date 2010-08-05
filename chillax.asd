@@ -4,7 +4,7 @@
   :maintainer "Josh Marchán <sykopomp@sykosomatic.org>"
   :author "Josh Marchán <sykopomp@sykosomatic.org>"
   :licence "MIT"
-  :depends-on (flexi-streams sheeple drakma yason)
+  :depends-on (flexi-streams drakma yason)
   :serial t
   :components
   ((:module src
