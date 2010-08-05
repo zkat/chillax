@@ -297,24 +297,24 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
 ;;;
 ;;; Documents
 ;;;
-(defgeneric get-document (db id)
+(defgeneric get-document (db id &key)
   (:documentation "Returns an CouchDB document from DB as an alist.")
-  (:method ((db database) id)
-    (handle-request (response db (princ-to-string id))
-      (:ok response)
-      (:not-found (error 'document-not-found :db db :id id)))))
-
-(defgeneric all-documents (db &key)
-  (:documentation "Returns all CouchDB documents in DB, in alist form.")
-  (:method ((db database) &key startkey endkey limit include-docs &aux params)
+  (:method ((db database) id &key key startkey endkey limit include-docs &aux params)
     (flet ((add-param (key value)
              (push (cons key (prin1-to-string value)) params)))
+      (when key (add-param "key" key))
       (when startkey (add-param "startkey" startkey))
       (when endkey (add-param "endkey" endkey))
       (when limit (add-param "limit" limit))
       (when include-docs (add-param "include_docs" "true"))
-      (handle-request (response db "_all_docs" :parameters params)
-        (:ok response)))))
+      (handle-request (response db (princ-to-string id) :parameters params)
+        (:ok response)
+        (:not-found (error 'document-not-found :db db :id id))))))
+
+(defgeneric all-documents (db &key)
+  (:documentation "Returns all CouchDB documents in DB, in alist form.")
+  (:method ((db database) &rest all-keys)
+    (apply #'get-document db "_all_docs" all-keys)))
 
 (defgeneric batch-get-documents (db &rest doc-ids)
   (:documentation "Uses _all_docs to quickly fetch the given DOC-IDs in a single request.")
