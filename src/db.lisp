@@ -112,11 +112,27 @@ second-to-last key. tl;dr: DWIM SETF function for HASHGET."
   (:documentation
    "A SERVER is an abstraction over a CouchDB server's host, port, and basic authentication."))
 
-(defclass json-server (server)
+(defgeneric data->json (server data)
+  (:documentation "Converts DATA to JSON suitable for sending to CouchDB.")
+  (:method ((server server) data)
+    data))
+(defgeneric json->data (server json)
+  (:documentation "Converts JSON to the desired data structure.")
+  (:method ((server server) json)
+    json))
+
+(defclass hash-server (server)
   ()
   (:documentation
-   "JSON-SERVERs are used to dispatch couch-request in a way that will make it automatically handle
-   encoding/decoding of JSON to and from alists."))
+   "HASH-SERVERs are used to dispatch couch-request in a way that will make it automatically handle
+   encoding/decoding of JSON to and from hash tables."))
+
+(defmethod data->json ((server hash-server) data)
+  (with-output-to-string (s)
+    (json:encode data s)))
+
+(defmethod json->data ((server hash-server) json)
+  (json:parse json))
 
 (defun server->url (server)
   "Returns a string representation of the URL SERVER represents."
@@ -129,31 +145,21 @@ second-to-last key. tl;dr: DWIM SETF function for HASHGET."
   (:documentation
    "Sends an HTTP request to the CouchDB server represented by SERVER. Most of the keyword arguments
  for drakma:http-request are available as kwargs for this message.")
-  (:method ((server server) uri &rest all-keys &key &allow-other-keys)
+  (:method ((server server) uri &rest all-keys &key (content nil contentp) &allow-other-keys)
     (multiple-value-bind (response status-code)
         (apply #'http-request (strcat (server->url server) uri)
                :content-type "application/json"
                :external-format-out +utf-8+
                :basic-authorization (with-slots (username password) server
                                       (when username (list username password)))
+               :content (if contentp (data->json server content) "")
                all-keys)
-      (values response (or (cdr (assoc status-code +status-codes+ :test #'=))
-                           ;; The code should never get here once we know all the
-                           ;; status codes CouchDB might return.
-                           (error "Unknown status code: ~A. HTTP Response: ~A"
-                                  status-code response))))))
-
-(defmethod couch-request :around ((server json-server) uri &rest all-keys
-                                  &key (content nil contentp) &allow-other-keys)
-  "This special :around reply wraps the standard SERVER reply and encodes/decodes JSON where
-appropriate, which makes for a nicer Lisp-side API."
-  (multiple-value-bind (response status-code)
-      (apply #'call-next-method server uri
-             :content (if contentp
-                          (with-output-to-string (s)
-                            (json:encode content s))
-                          "") all-keys)
-    (values (json:parse response) status-code)))
+      (values (json->data server response)
+              (or (cdr (assoc status-code +status-codes+ :test #'=))
+                  ;; The code should never get here once we know all the
+                  ;; status codes CouchDB might return.
+                  (error "Unknown status code: ~A. HTTP Response: ~A"
+                         status-code response))))))
 
 (defun all-dbs (server)
   "Requests a list of all existing databases from SERVER."
@@ -244,7 +250,7 @@ translated HTTP status code names. See +status-codes+ for all the currently-reco
       (:internal-server-error (error "Illegal database name: ~A" (name db)))
       (:not-found (error 'db-not-found :uri (db-namestring db))))))
 
-(defun db-connect (name &key (db-class 'database) server (server-class 'json-server))
+(defun db-connect (name &key (db-class 'database) server (server-class 'hash-server))
   "Confirms that a particular CouchDB database exists. If so, returns a new database object that can
 be used to perform operations on it."
   (let ((db (make-instance db-class 
@@ -253,7 +259,7 @@ be used to perform operations on it."
     (when (db-info db) 
       db)))
 
-(defun db-create (name &key (db-class 'database) server (server-class 'json-server))
+(defun db-create (name &key (db-class 'database) server (server-class 'hash-server))
   "Creates a new CouchDB database. Returns a database object that can be used to operate on it."
   (let ((db (make-instance db-class
                            :name name
