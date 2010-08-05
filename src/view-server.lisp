@@ -176,11 +176,13 @@ should return (values document response)."
     ("map_doc" . ,#'map-doc)
     ("reduce" . ,#'reduce-results)
     ("rereduce" . ,#'rereduce)
-    ("filter" . ,#'filter)
-    ("validate" . ,#'validate)
-    ("show" . ,#'show)
-    ("update" . ,#'update)
-    ;; Not implemented
+    ;; TODO - everything below here has changed.
+    ;;        CouchDB now uses some sort of 'DDoc'
+    ;;        thing, so this needs updating.
+    ;; ("filter" . ,#'filter)
+    ;; ("validate" . ,#'validate)
+    ;; ("show" . ,#'show)
+    ;; ("update" . ,#'update)
     ;; ("list" . couch-list)
     )
   "Dispatch table holding Couch command -> Chillax function associations.")
