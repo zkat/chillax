@@ -1,6 +1,6 @@
 (defpackage #:chillax-server
-  (:use :cl)
-  (:export :mkhash :emit :hashget :log-message :validation-failure :forbidden
+  (:use :cl :chillax.utils)
+  (:export :mkhash :strcat :fun :emit :hashget :log-message :validation-failure :forbidden
            :*user-package* :*encode-json* :*decode-json*))
 (defpackage #:chillax-server-user
   (:use :cl :chillax-server))
@@ -90,36 +90,6 @@ with the source code to compile a function from."
   "Adds an entry to the current map function results."
   (when (boundp '*map-results*) ;*map-results* is bound when the view server is started.
     (push (list key value) *map-results*)))
-
-(defun mkhash (&rest keys-and-values &aux (table (make-hash-table :test #'equal)))
-  "Convenience function for `literal' hash table definition."
-  (loop for (key val) on keys-and-values by #'cddr do (setf (gethash key table) val)
-     finally (return table)))
-
-(defun hashget (hash &rest keys)
-  "Convenience function for recursively accessing hash tables."
-  (reduce (lambda (h k) (gethash k h)) keys :initial-value hash))
-
-(define-compiler-macro hashget (hash &rest keys)
-  (if (null keys) hash
-      (let ((hash-sym (make-symbol "HASH"))
-            (key-syms (loop for i below (length keys)
-                         collect (make-symbol (format nil "~:@(~:R~)-KEY" i)))))
-        `(let ((,hash-sym ,hash)
-               ,@(loop for key in keys for sym in key-syms
-                    collect `(,sym ,key)))
-           ,(reduce (lambda (hash key) `(gethash ,key ,hash))
-                    key-syms :initial-value hash-sym)))))
-
-(defun (setf hashget) (new-value hash key &rest more-keys)
-  "Uses the last key given to hashget to insert NEW-VALUE into the hash table
-returned by the second-to-last key.
-tl;dr: DWIM SETF function for HASHGET."
-  (if more-keys
-      (setf (gethash (car (last more-keys))
-                     (apply #'hashget hash key (butlast more-keys)))
-            new-value)
-      (setf (gethash key hash) new-value)))
 
 (defun log-message (format-string &rest format-args)
   "Like FORMAT, but the resulting string is written to CouchDB's log."

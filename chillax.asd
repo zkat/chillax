@@ -10,6 +10,7 @@
   ((:module src
             :serial t
             :components
-            ((:file "package")
+            ((:file "utils")
+             (:file "package")
              (:file "db")))))
 
