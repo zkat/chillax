@@ -147,13 +147,12 @@ second-to-last key. tl;dr: DWIM SETF function for HASHGET."
                                   &key (content nil contentp) &allow-other-keys)
   "This special :around reply wraps the standard SERVER reply and encodes/decodes JSON where
 appropriate, which makes for a nicer Lisp-side API."
-  (when contentp
-    (setf all-keys
-          (append all-keys (list :content
-                                 (with-output-to-string (s)
-                                   (json:encode content s))))))
   (multiple-value-bind (response status-code)
-      (apply #'call-next-method server uri all-keys)
+      (apply #'call-next-method server uri
+             :content (if contentp
+                          (with-output-to-string (s)
+                            (json:encode content s))
+                          "") all-keys)
     (values (json:parse response) status-code)))
 
 (defun all-dbs (server)
@@ -281,8 +280,7 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
   (:documentation "Triggers a database compaction.")
   (:method ((db database))
     (handle-request (response db "_compact" :method :post :content "")
-      (:accepted response)
-      #+nil(:bad-content-type (error "Bad content type.")))))
+      (:accepted response))))
 
 (defgeneric changes (db)
   (:documentation "Returns the changes feed for DB")
@@ -296,7 +294,7 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
 (defgeneric get-document (db id)
   (:documentation "Returns an CouchDB document from DB as an alist.")
   (:method ((db database) id)
-    (handle-request (response db id)
+    (handle-request (response db (princ-to-string id))
       (:ok response)
       (:not-found (error 'document-not-found :db db :id id)))))
 
@@ -323,7 +321,7 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
 (defgeneric put-document (db id doc &key)
   (:documentation "Puts a document into DB, using ID.")
   (:method ((db database) id doc &key batch-ok-p)
-    (handle-request (response db id :method :put :content doc
+    (handle-request (response db (princ-to-string id) :method :put :content doc
                               :parameters (when batch-ok-p '(("batch" . "ok"))))
       ((:created :accepted) response)
       (:conflict (error 'document-conflict :id id :doc doc)))))
@@ -347,7 +345,7 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
 (defgeneric copy-document (db from-id to-id &key)
   (:documentation "Copies a document's content in-database.")
   (:method ((db database) from-id to-id &key revision)
-    (handle-request (response db from-id :method :copy
-                              :additional-headers `(("Destination" . ,to-id))
+    (handle-request (response db (princ-to-string from-id) :method :copy
+                              :additional-headers `(("Destination" . ,(princ-to-string to-id)))
                               :parameters `(,(when revision `("rev" . ,revision))))
       (:created response))))
