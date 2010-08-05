@@ -244,7 +244,7 @@ translated HTTP status code names. See +status-codes+ for all the currently-reco
       (:internal-server-error (error "Illegal database name: ~A" (name db)))
       (:not-found (error 'db-not-found :uri (db-namestring db))))))
 
-(defun connect-to-db (name &key (db-class 'database) server (server-class 'json-server))
+(defun db-connect (name &key (db-class 'database) server (server-class 'json-server))
   "Confirms that a particular CouchDB database exists. If so, returns a new database object that can
 be used to perform operations on it."
   (let ((db (make-instance db-class 
@@ -253,7 +253,7 @@ be used to perform operations on it."
     (when (db-info db) 
       db)))
 
-(defun create-db (name &key (db-class 'database) server (server-class 'json-server))
+(defun db-create (name &key (db-class 'database) server (server-class 'json-server))
   "Creates a new CouchDB database. Returns a database object that can be used to operate on it."
   (let ((db (make-instance db-class
                            :name name
@@ -266,23 +266,23 @@ be used to perform operations on it."
 (defun ensure-db (name &rest all-keys &key &allow-other-keys)
   "Either connects to an existing database, or creates a new one. Returns two values: If a new
 database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
-  (handler-case (values (apply #'create-db name all-keys) t)
-    (db-already-exists () (values (apply #'connect-to-db name all-keys) nil))))
+  (handler-case (values (apply #'db-create name all-keys) t)
+    (db-already-exists () (values (apply #'db-connect name all-keys) nil))))
 
-(defgeneric delete-db (db &key)
+(defgeneric db-delete (db &key)
   (:documentation "Deletes a CouchDB database.")
   (:method ((db database) &key)
     (handle-request (response db "" :method :delete)
       (:ok response)
       (:not-found (error 'db-not-found :uri (db-namestring db))))))
 
-(defgeneric compact-db (db)
+(defgeneric db-compact (db)
   (:documentation "Triggers a database compaction.")
   (:method ((db database))
     (handle-request (response db "_compact" :method :post :content "")
       (:accepted response))))
 
-(defgeneric changes (db)
+(defgeneric db-changes (db)
   (:documentation "Returns the changes feed for DB")
   (:method ((db database))
     (handle-request (response db "_changes")
