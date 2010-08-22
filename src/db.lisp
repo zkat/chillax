@@ -331,3 +331,12 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
                               :additional-headers `(("Destination" . ,(princ-to-string to-id)))
                               :parameters `(,(when revision `("rev" . ,revision))))
       (:created response))))
+
+(defgeneric save-document (db id doc &key)
+  (:documentation "Saves DOC, updating its _rev slot.")
+  (:method ((db database) id doc &key batch-ok-p)
+    (let* ((response (put-document db id doc :batch-ok-p batch-ok-p))
+           (revision (hashget response "rev")))
+      (setf (hashget doc "_rev") revision)
+      doc)))
+
