@@ -45,4 +45,5 @@
    :post-document
    :delete-document
    :copy-document
+   :save-document
    ))
