@@ -25,17 +25,19 @@
 ;;        behing the use of /, so a mechanism to escape it in certain situations would be good.
 
 ;; Database protocol
+(defgeneric make-db-object (server name)
+  (:documentation "Creates an object which represents a database connection in SERVER."))
 (defgeneric database-server (database))
 (defgeneric database-name (database))
 
+;; Database functions
 (defun print-database (db stream)
   (print-unreadable-object (db stream :type t :identity t)
     (format stream "~A" (db-namestring db))))
 
-(defgeneric db-request (db uri &key &allow-other-keys)
-  (:documentation "Sends a CouchDB request to DB.")
-  (:method (db uri &rest all-keys &key &allow-other-keys)
-    (apply #'couch-request (database-server db) (strcat (database-name db) "/" uri) all-keys)))
+(defun db-request (db uri &rest all-keys)
+  "Sends a CouchDB request to DB."
+  (apply #'couch-request (database-server db) (strcat (database-name db) "/" uri) all-keys))
 
 (defmacro handle-request ((result-var db uri &rest db-request-keys &key &allow-other-keys) &body expected-responses)
   "Provides a nice interface to the relatively manual, low-level status-code checking that Chillax
@@ -49,57 +51,49 @@ translated HTTP status code names. See +status-codes+ for all the currently-reco
          ,@expected-responses
          (otherwise (error 'unexpected-response :status-code ,status-code :response ,result-var))))))
 
-(defgeneric db-info (db)
-  (:documentation "Fetches info about a given database from the CouchDB server.")
-  (:method (db)
-    (handle-request (response db "")
-      (:ok response)
-      (:internal-server-error (error "Illegal database name: ~A" (database-name db)))
-      (:not-found (error 'db-not-found :uri (db-namestring db))))))
+(defun db-info (db)
+  "Fetches info about a given database from the CouchDB server."
+  (handle-request (response db "")
+    (:ok response)
+    (:internal-server-error (error "Illegal database name: ~A" (database-name db)))
+    (:not-found (error 'db-not-found :uri (db-namestring db)))))
 
-(defun db-connect (name &key (db-class 'standard-database) server (server-class 'hash-server))
+(defun db-connect (server name)
   "Confirms that a particular CouchDB database exists. If so, returns a new database object that can
 be used to perform operations on it."
-  (let ((db (make-instance db-class
-                           :server (or server (make-instance server-class))
-                           :name name)))
+  (let ((db (make-db-object server name)))
     (when (db-info db)
       db)))
 
-(defun db-create (name &key (db-class 'standard-database) server (server-class 'hash-server))
+(defun db-create (server name)
   "Creates a new CouchDB database. Returns a database object that can be used to operate on it."
-  (let ((db (make-instance db-class
-                           :name name
-                           :server (or server (make-instance server-class)))))
+  (let ((db (make-db-object server name)))
     (handle-request (response db "" :method :put)
       (:created db)
       (:internal-server-error (error "Illegal database name: ~A" name))
       (:precondition-failed (error 'db-already-exists :uri (db-namestring db))))))
 
-(defun ensure-db (name &rest all-keys &key &allow-other-keys)
+(defun ensure-db (server name)
   "Either connects to an existing database, or creates a new one. Returns two values: If a new
 database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
-  (handler-case (values (apply #'db-create name all-keys) t)
-    (db-already-exists () (values (apply #'db-connect name all-keys) nil))))
+  (handler-case (values (db-create server name) t)
+    (db-already-exists () (values (db-connect server name) nil))))
 
-(defgeneric db-delete (db &key)
-  (:documentation "Deletes a CouchDB database.")
-  (:method (db &key)
-    (handle-request (response db "" :method :delete)
-      (:ok response)
-      (:not-found (error 'db-not-found :uri (db-namestring db))))))
+(defun db-delete (db)
+  "Deletes a CouchDB database."
+  (handle-request (response db "" :method :delete)
+    (:ok response)
+    (:not-found (error 'db-not-found :uri (db-namestring db)))))
 
-(defgeneric db-compact (db)
-  (:documentation "Triggers a database compaction.")
-  (:method (db)
-    (handle-request (response db "_compact" :method :post :content "")
-      (:accepted response))))
+(defun db-compact (db)
+  "Triggers a database compaction."
+  (handle-request (response db "_compact" :method :post :content "")
+    (:accepted response)))
 
-(defgeneric db-changes (db)
-  (:documentation "Returns the changes feed for DB")
-  (:method (db)
-    (handle-request (response db "_changes")
-      (:ok response))))
+(defun db-changes (db)
+  "Returns the changes feed for DB"
+  (handle-request (response db "_changes")
+    (:ok response)))
 
 (defun db-namestring (db)
   (strcat (server->url (database-server db)) (database-name db)))
