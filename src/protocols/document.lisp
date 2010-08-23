@@ -88,6 +88,6 @@
   (:documentation "Saves DOC, updating its _rev slot.")
   (:method (db id doc &key batch-ok-p)
     (let* ((response (put-document db id doc :batch-ok-p batch-ok-p))
-           (revision (at response "rev")))
-      (setf (at doc "_rev") revision)
+           (revision (hashget response "rev")))
+      (setf (hashget doc "_rev") revision)
       doc)))
