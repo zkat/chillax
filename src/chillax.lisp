@@ -53,7 +53,6 @@
 (defclass standard-database ()
   ((server
     :initarg :server
-    :initform (make-instance 'server)
     :reader database-server)
    (name
     :initarg :name
@@ -64,3 +63,6 @@
 
 (defmethod print-object ((db standard-database) stream)
   (print-database db stream))
+
+(defmethod make-db-object ((server standard-server) name)
+  (make-instance 'standard-database :server server :name name))
