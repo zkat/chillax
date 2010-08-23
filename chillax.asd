@@ -12,5 +12,7 @@
             :components
             ((:file "utils")
              (:file "package")
-             (:file "db")))))
-
+             (:file "base")
+             (:file "server")
+             (:file "database")
+             (:file "document")))))
