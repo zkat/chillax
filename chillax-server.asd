@@ -4,7 +4,7 @@
   :maintainer "Josh Marchán <sykopomp@sykosomatic.org>"
   :author "Josh Marchán <sykopomp@sykosomatic.org>"
   :licence "MIT"
-  :depends-on (yason)
+  :depends-on (yason alexandria)
   :serial t
   :components
   ((:module src
