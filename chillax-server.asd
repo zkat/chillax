@@ -4,7 +4,7 @@
   :maintainer "Kat Marchán <kzm@sykosomatic.org>"
   :author "Kat Marchán <kzm@sykosomatic.org>"
   :licence "MIT"
-  :depends-on (yason)
+  :depends-on (yason alexandria)
   :serial t
   :components
   ((:module src
