@@ -7,6 +7,7 @@
    :hashget
    :fun
    :strcat
+   :at
 
    ;; Conditions
    :couchdb-error :unexpected-response :database-error
