@@ -1,7 +1,7 @@
 (cl:defpackage :chillax.utils
   (:use :cl :alexandria)
   (:export
-   :fun :mkhash :hashget :strcat))
+   :fun :mkhash :hashget :strcat :at))
 (in-package :chillax.utils)
 
 ;;; Functions
@@ -43,3 +43,32 @@ tl;dr: DWIM SETF function for HASHGET."
 ;;; Strings
 (defun strcat (string &rest more-strings)
   (apply #'concatenate 'string string more-strings))
+
+;;;
+;;; At
+;;;
+(defgeneric at (doc &rest keys))
+(defgeneric (setf at) (new-value doc key &rest more-keys))
+
+(defmethod at ((doc hash-table) &rest keys)
+  (apply #'hashget doc keys))
+(defmethod (setf at) (new-value (doc hash-table) key &rest more-keys)
+  (apply #'(setf hashget) new-value doc key more-keys))
+
+(defmethod at ((doc list) &rest keys)
+  (reduce (lambda (alist key)
+            (cdr (assoc key alist :test #'equal)))
+          keys :initial-value doc))
+(defmethod (setf at) (new-value (doc list) key &rest more-keys)
+  (if more-keys
+      (setf (cdr (assoc (car (last more-keys))
+                        (apply #'at doc key (butlast more-keys))
+                        :test #'equal))
+            new-value)
+      (setf (cdr (assoc key doc :test #'equal)) new-value)))
+
+;; A playful alias.
+(defun @ (doc &rest keys)
+  (apply #'at doc keys))
+(defun (setf @) (new-value doc key &rest more-keys)
+  (apply #'(setf at) new-value doc key more-keys))
