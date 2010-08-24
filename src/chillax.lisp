@@ -29,9 +29,9 @@
   (:documentation
    "Default implementation of the server protocol."))
 
-(defmethod data->json ((server standard-server) data)
+(defmethod data->json ((server standard-server) data &key)
   data)
-(defmethod json->data ((server standard-server) json)
+(defmethod json->data ((server standard-server) json &key)
   json)
 
 (defclass hash-server ()
@@ -40,11 +40,11 @@
    "HASH-SERVERs are used to dispatch couch-request in a way that will make it automatically handle
    encoding/decoding of JSON to and from hash tables."))
 
-(defmethod data->json ((server hash-server) data)
+(defmethod data->json ((server hash-server) data &key)
   (with-output-to-string (s)
     (json:encode data s)))
 
-(defmethod json->data ((server hash-server) json)
+(defmethod json->data ((server hash-server) json &key)
   (json:parse json))
 
 (defclass standard-hash-server (standard-server hash-server) ())
