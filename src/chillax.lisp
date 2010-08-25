@@ -64,3 +64,45 @@
 
 (defmethod make-db-object ((server standard-server) name)
   (make-instance 'standard-database :server server :name name))
+
+;;;
+;;; Design-doc/view helper.
+;;;
+(defun make-view (map-def &optional reduce-def)
+  (let ((view (mkhash "map" map-def)))
+    (when reduce-def (setf (at view "reduce") reduce-def))
+    view))
+
+(defgeneric view-map-definition (view)
+  (:method ((view hash-table))
+    (at view "map")))
+(defgeneric view-reduce-definition (view)
+  (:method ((view hash-table))
+    (at view "reduce")))
+
+(defun get-temporary-view (db view &optional (language "common-lisp"))
+  "A temporary view needs at least a \"map\" field. \"language\":\"foo\" is necessary if the view is
+  supposed to be in any language other than JavaScript."
+  (let ((json (with-output-to-string (s)
+                (format s "{")
+                (format s "\"map\":~S" (view-map-definition view))
+                (when (view-reduce-definition view)
+                  (format s ",\"reduce\":~S" (view-reduce-definition view)))
+                (format s ",\"language\":~S" language)
+                (format s "}"))))
+    (handle-request (response db "_temp_view" :method :post
+                              :content json
+                              :convert-data-p nil)
+      (:ok response))))
+
+(defun view-cleanup (db)
+  (handle-request (response db "_view_cleanup" :method :post)
+    (:accepted response)))
+
+(defun compact-design-doc (db design-doc-name)
+  (handle-request (response db (strcat "_compact/" design-doc-name) :method :post)
+    (:accepted response)))
+
+(defun design-doc-info (db design-doc-name)
+  (handle-request (response db (strcat "_design/" design-doc-name "/_info"))
+    (:ok response)))
