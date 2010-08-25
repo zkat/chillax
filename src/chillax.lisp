@@ -34,7 +34,7 @@
 (defmethod json->data ((server standard-server) json &key)
   json)
 
-(defclass hash-server ()
+(defclass hash-server (standard-server)
   ()
   (:documentation
    "HASH-SERVERs are used to dispatch couch-request in a way that will make it automatically handle
@@ -46,8 +46,6 @@
 
 (defmethod json->data ((server hash-server) json &key)
   (json:parse json))
-
-(defclass standard-hash-server (standard-server hash-server) ())
 
 ;;; database
 (defclass standard-database ()
