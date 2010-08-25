@@ -101,8 +101,10 @@
 
 (defun compact-design-doc (db design-doc-name)
   (handle-request (response db (strcat "_compact/" design-doc-name) :method :post)
-    (:accepted response)))
+    (:accepted response)
+    (:not-found (error 'document-not-found :db db :id design-doc-name))))
 
 (defun design-doc-info (db design-doc-name)
   (handle-request (response db (strcat "_design/" design-doc-name "/_info"))
-    (:ok response)))
+    (:ok response)
+    (:not-found (error 'document-not-found :db db :id design-doc-name))))
