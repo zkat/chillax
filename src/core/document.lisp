@@ -78,7 +78,8 @@
   (:documentation "Deletes an existing document.")
   (:method (db id revision)
     (handle-request (response db (format nil "~A?rev=~A" id revision) :method :delete)
-      (:ok response))))
+      (:ok response)
+      (:not-found (error 'document-not-found :db db :id id)))))
 
 (defgeneric copy-document (db from-id to-id &key)
   (:documentation "Copies a document's content in-database.")
@@ -86,7 +87,8 @@
     (handle-request (response db (princ-to-string from-id) :method :copy
                               :additional-headers `(("Destination" . ,(princ-to-string to-id)))
                               :parameters `(,(when revision `("rev" . ,revision))))
-      (:created response))))
+      (:created response)
+      (:not-found (error 'document-not-found :db db :id from-id)))))
 
 ;;;
 ;;; Document object API
