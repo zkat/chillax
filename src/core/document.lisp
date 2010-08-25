@@ -45,11 +45,15 @@
     (apply #'get-document db "_all_docs" all-keys)))
 
 (defgeneric batch-get-documents (db &rest doc-ids)
-  (:documentation "Uses _all_docs to quickly fetch the given DOC-IDs in a single request.")
+  (:documentation
+   "Uses _all_docs to quickly fetch the given DOC-IDs in a single request. Note that this function
+   will NOT signal a DOCUMENT-NOT-FOUND error when one or more DOC-IDs are not found. Instead, the
+   results will be returned, and it's the user's responsibility to deal with any missing docs.")
   (:method (db &rest doc-ids)
     (handle-request (response db "_all_docs" :method :post
                               :parameters '(("include_docs" . "true"))
-                              :content (format nil "{\"keys\":[~{~S~^,~}]}" doc-ids))
+                              :content (format nil "{\"keys\":[~{~S~^,~}]}" doc-ids)
+                              :convert-data-p nil)
       (:ok response))))
 
 (defgeneric put-document (db id doc &key batch-ok-p)
