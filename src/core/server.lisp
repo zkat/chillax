@@ -15,18 +15,25 @@
 (defgeneric json->data (server json &key)
   (:documentation "Converts JSON to the desired data structure."))
 (defparameter +utf-8+ (make-external-format :utf-8 :eol-style :lf))
-(defgeneric couch-request (server uri &key &allow-other-keys)
+(defgeneric couch-request (server uri &key convert-data-p &allow-other-keys)
   (:documentation
    "Sends an HTTP request to the CouchDB server represented by SERVER. Most of the keyword arguments
  for drakma:http-request are available as kwargs for this message.")
-  (:method (server uri &rest all-keys &key (content nil contentp) &allow-other-keys)
+  (:method (server uri &rest all-keys
+            &key (content nil contentp) (convert-data-p t)
+            &allow-other-keys)
+    (remf all-keys :convert-data-p)
     (multiple-value-bind (response status-code)
         (apply #'http-request (strcat (server->url server) uri)
                :content-type "application/json"
                :external-format-out +utf-8+
                :basic-authorization (with-slots (username password) server
                                       (when username (list username password)))
-               :content (if contentp (data->json server content) "")
+               :content (cond ((and contentp convert-data-p)
+                               (data->json server content))
+                              ((and contentp (not convert-data-p))
+                               content)
+                              (t ""))
                all-keys)
       (values (json->data server response)
               (or (cdr (assoc status-code +status-codes+ :test #'=))
