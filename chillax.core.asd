@@ -18,4 +18,5 @@
                       ((:file "base")
                        (:file "server")
                        (:file "database")
-                       (:file "document")))))))
+                       (:file "document")
+                       (:file "design-document")))))))
