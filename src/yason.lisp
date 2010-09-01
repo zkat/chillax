@@ -27,7 +27,9 @@
 
 (defmethod data->json ((server yason-server) data &key)
   (with-output-to-string (s)
-    (yason:encode data s)))
+    (if (listp data)
+        (yason:encode-alist data s)
+        (yason:encode data s))))
 
 (defmethod json->data ((server yason-server) json &key)
   (let ((yason:*parse-json-arrays-as-vectors* (parse-json-arrays-as-vectors-p server))
