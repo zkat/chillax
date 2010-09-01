@@ -17,8 +17,10 @@
     (:ok response)
     (:not-found (error 'document-not-found :db db :id design-doc-name))))
 
-(defun invoke-design-doc (db design-doc-name &rest all-keys)
-  (apply #'get-document db (strcat "_design/" design-doc-name) all-keys))
+(defun invoke-view (db design-doc-name view-name &rest all-keys)
+  ;; FIXME - The parameters view invocation accepts are different
+  ;;        from those of plain old get-document.
+  (apply #'get-document db (strcat "_design/" design-doc-name "_view/" view-name) all-keys))
 
 ;;;
 ;;; Views
