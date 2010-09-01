@@ -25,10 +25,10 @@
 ;;;
 ;;; Views
 ;;;
-(defun get-temporary-view (db &key
-                           (language "common-lisp")
-                           (map (error "Must provide a map function for temporary views."))
-                           reduce)
+(defun invoke-temporary-view (db &key
+                              (language "common-lisp")
+                              (map (error "Must provide a map function for temporary views."))
+                              reduce)
   (let ((json (with-output-to-string (s)
                 (format s "{")
                 (format s ",\"language\":~S" language)
