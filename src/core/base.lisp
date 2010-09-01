@@ -27,6 +27,7 @@
    (response :initarg :response :reader error-response))
   (:report (lambda (condition stream)
              (format stream "Unexpected response with status code: ~A~@
-                             HTTP Response: ~A"
+                             HTTP Response: ~A~@
+                             Please report this to Chillax's maintainer(s)"
                      (error-status-code condition)
                      (error-response condition)))))

@@ -26,12 +26,17 @@
 
 ;; Database protocol
 (defgeneric make-db-object (server name)
-  (:documentation "Creates an object which represents a database connection in SERVER."))
-(defgeneric database-server (database))
-(defgeneric database-name (database))
+  (:documentation
+"Creates an object which represents a database connection in SERVER. The object must conform to the
+database protocol."))
+(defgeneric database-server (database)
+  (:documentation "Returns the server object with which DATABASE is associated."))
+(defgeneric database-name (database)
+  (:documentation "Returns the name of the database, a string."))
 
 ;; Database functions
 (defun print-database (db stream)
+  "Objects implementing the database protocol may use this function in their PRINT-OBJECT method."
   (print-unreadable-object (db stream :type t :identity t)
     (format stream "~A" (db-namestring db))))
 
@@ -96,4 +101,5 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
     (:ok response)))
 
 (defun db-namestring (db)
+  "Returns a string representing the full URI for DB."
   (strcat (server->url (database-server db)) (database-name db)))
