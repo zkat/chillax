@@ -1,5 +1,5 @@
 (asdf:defsystem chillax.core
-  :version "0.1"
+  :version "0.2"
   :description "CouchDB abstraction layer - core API and protocols."
   :maintainer "Kat Marchán <kzm@sykosomatic.org>"
   :author "Kat Marchán <kzm@sykosomatic.org>"
