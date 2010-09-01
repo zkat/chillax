@@ -1,6 +1,40 @@
 (in-package :chillax)
 
 ;;;
+;;; Status codes
+;;;
+(defparameter +status-codes+
+  '((200 . :ok)
+    (201 . :created)
+    (202 . :accepted)
+    (304 . :not-modified)
+    (400 . :bad-request)
+    (404 . :not-found)
+    (405 . :resource-not-allowed)
+    (409 . :conflict)
+    (412 . :precondition-failed)
+    (415 . :bad-content-type)
+    (500 . :internal-server-error))
+  "A simple alist of keyword names for HTTP status codes, keyed by status code.")
+
+(defparameter +utf-8+ (make-external-format :utf-8 :eol-style :lf))
+
+;;;
+;;; Conditions
+;;;
+(define-condition couchdb-error () ())
+
+(define-condition unexpected-response (couchdb-error)
+  ((status-code :initarg :status-code :reader error-status-code)
+   (response :initarg :response :reader error-response))
+  (:report (lambda (condition stream)
+             (format stream "Unexpected response with status code: ~A~@
+                             HTTP Response: ~A~@
+                             Please report this to Chillax's maintainer(s)"
+                     (error-status-code condition)
+                     (error-response condition)))))
+
+;;;
 ;;; Server API
 ;;;
 
@@ -14,7 +48,7 @@
   (:documentation "Converts DATA to JSON suitable for sending to CouchDB."))
 (defgeneric json->data (server json &key)
   (:documentation "Converts JSON to the desired data structure."))
-(defparameter +utf-8+ (make-external-format :utf-8 :eol-style :lf))
+
 (defgeneric couch-request (server uri &key convert-data-p &allow-other-keys)
   (:documentation
    "Sends an HTTP request to the CouchDB server represented by SERVER. Most of the keyword arguments
