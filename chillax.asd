@@ -4,4 +4,8 @@
   :maintainer "Kat Marchán <kzm@sykosomatic.org>"
   :author "Kat Marchán <kzm@sykosomatic.org>"
   :licence "MIT"
-  :depends-on (chillax.core chillax.yason))
+  :depends-on (chillax.core chillax.yason)
+  :components
+  ((:module src
+            :components
+            ((:file "chillax")))))
