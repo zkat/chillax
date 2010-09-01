@@ -1,4 +1,4 @@
-(in-package :chillax)
+(in-package :chillax.core)
 
 ;;;
 ;;; Design Doc basics

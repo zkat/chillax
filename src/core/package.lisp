@@ -1,4 +1,4 @@
-(cl:defpackage #:chillax
+(cl:defpackage #:chillax.core
   (:use :cl :flexi-streams :drakma :alexandria :chillax.utils)
   (:export
 
