@@ -89,38 +89,3 @@
                               :parameters `(,(when revision `("rev" . ,revision))))
       (:created response)
       (:not-found (error 'document-not-found :db db :id from-id)))))
-
-;;;
-;;; Document object API
-;;;
-(defun save-document (doc &key batch-ok-p)
-  (let* ((response (put-document (at doc "_database") (at doc "_id")
-                                 doc :batch-ok-p batch-ok-p))
-         (revision (at response "rev")))
-    (setf (at doc "_rev") revision)
-    doc))
-
-(defun update-document (doc)
-  "Updates DOC with the most recent data from the database."
-  (let* ((db (at doc "_database"))
-         (id (at doc "_id"))
-         (new-doc (get-document db id)))
-    (if (equal (at doc "_rev") (at new-doc "_rev"))
-        doc
-        (%update-document doc new-doc))))
-
-(defgeneric %update-document (old-doc new-doc)
-  (:method ((old-doc hash-table) new-doc)
-    (let ((db (at old-doc "_database")))
-      (clrhash old-doc)
-      (maphash (lambda (key value)
-                 (setf (at new-doc key) value))
-               old-doc)
-      (setf (at old-doc "_database") db)
-      old-doc))
-  (:method ((old-doc list) new-doc)
-    (let ((db (at old-doc "_database")))
-      (setf (car old-doc) (car new-doc)
-            (cdr old-doc) (cdr new-doc)
-            (at old-doc "_database") db)
-      old-doc)))
