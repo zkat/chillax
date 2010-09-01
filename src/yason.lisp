@@ -1,5 +1,6 @@
 (defpackage #:chillax.yason
-  (:use :cl :chillax))
+  (:use :cl :chillax.core)
+  (:export :yason-server))
 (in-package :chillax.yason)
 
 (defgeneric parse-json-arrays-as-vectors-p (server))
@@ -10,7 +11,7 @@
 (defclass yason-server (standard-server)
   ((array-as-vector-p :initarg :array-as-vector-p
                       :reader parse-json-arrays-as-vectors-p)
-   (boolean-as-symbol-p :initarg :boolean-as-symbol
+   (boolean-as-symbol-p :initarg :boolean-as-symbol-p
                         :reader parse-json-booleans-as-symbols-p)
    (object-as-alist-p :initarg :object-as-alist-p
                       :reader parse-object-as-alist-p)
@@ -30,7 +31,7 @@
 
 (defmethod json->data ((server yason-server) json &key)
   (let ((yason:*parse-json-arrays-as-vectors* (parse-json-arrays-as-vectors-p server))
-        (yason:*parse-json-booleans-as-symbols-p* (parse-json-booleans-as-symbols-p server))
+        (yason:*parse-json-booleans-as-symbols* (parse-json-booleans-as-symbols-p server))
         (yason:*parse-object-as-alist* (parse-object-as-alist-p server))
         (yason:*parse-object-key-fn* (parse-object-key-fun server))) 
     (yason:parse json)))
