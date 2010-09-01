@@ -103,3 +103,23 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
 (defun db-uri (db)
   "Returns a string representing the full URI for DB."
   (strcat (server-uri (database-server db)) (database-name db)))
+
+;;;
+;;; Sample protocol implementation
+;;;
+(defclass standard-database ()
+  ((server
+    :initarg :server
+    :reader database-server)
+   (name
+    :initarg :name
+    :reader database-name))
+  (:documentation
+   "Base database class. These objects represent the information required in order to communicate
+   with a particular CouchDB database."))
+
+(defmethod print-object ((db standard-database) stream)
+  (print-database db stream))
+
+(defmethod make-db-object ((server standard-server) name)
+  (make-instance 'standard-database :server server :name name))
