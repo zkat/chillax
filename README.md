@@ -78,6 +78,29 @@ for an example. The protocol is fairly small and straightforward to implement.
 For a full listing of protocol functions, refer to src/core/packages.lisp, and to the various
 related files for actual doc strings.
 
+# View Server
+
+The Chillax View Server allows you to write views in full-fledged Common Lisp. In order to use the
+server, you must create a binary using code loaded by chillax.view-server.asd, and make
+chillax-server::run-server the toplevel function.
+
+Once you put the binary in a place visible to the CouchDB process, add the following to
+/etc/couchdb/local.ini (or wherever your local.ini is located):
+
+    [query_servers]
+    common-lisp = /path/to/chillax-view-server
+
+Add the common-lisp entry if there's already a query_servers entry.
+
+Once you've done this, you can start making queries directly in Lisp!
+
+    CHILLAX> (invoke-temporary-view *db* :language "common-lisp"
+                                         :map (prin1-to-string '(lambda (doc) (emit doc 1))))
+
+You can load anything you want into the view server image before dumping it, customize which package
+it executes views in, etc. The source code is fairly short and easy to digest. It's designed to be
+customizable for whatever your needs are.
+
 # Yason Problem
 
 Note that, at least on some systems, versions of [Yason](http://github.com/hanshuebner/Yason) prior
