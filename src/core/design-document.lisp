@@ -38,24 +38,3 @@
                               :content json
                               :convert-data-p nil)
       (:ok response))))
-
-;; (defun make-view (map-def &optional reduce-def)
-;;   (let ((view (mkhash "map" map-def)))
-;;     (when reduce-def (setf (at view "reduce") reduce-def))
-;;     view))
-
-;; (defun ensure-design-doc (db name &key (language "common-lisp") views
-;;                           &aux (full-name (strcat "_design/" name)))
-;;   (let ((old-doc (get-document db full-name))
-;;         (new-doc (mkhash "language" language
-;;                          "views" views)))
-;;     (when old-doc
-;;       (setf (at new-doc "_rev") (at old-doc "_rev")))
-;;     (put-document db full-name new-doc)
-;;     full-name))
-
-;; (defun ensure-view (design-doc view-name view)
-;;   (if (at design-doc "views")
-;;       (setf (at design-doc "views" view-name) view)
-;;       (setf (at design-doc "views") (mkhash view-name view)))
-;;   design-doc)
