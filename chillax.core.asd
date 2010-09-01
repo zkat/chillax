@@ -15,7 +15,6 @@
                       :serial t
                       :components
                       ((:file "package")
-                       (:file "base")
                        (:file "server")
                        (:file "database")
                        (:file "document")
