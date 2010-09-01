@@ -11,11 +11,11 @@
             :serial t
             :components
             ((:file "utils")
-             (:file "package")
              (:module core
                       :serial t
                       :components
-                      ((:file "base")
+                      ((:file "package")
+                       (:file "base")
                        (:file "server")
                        (:file "database")
                        (:file "document")
