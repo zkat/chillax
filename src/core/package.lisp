@@ -39,8 +39,8 @@
    :view-cleanup
    :compact-design-doc
    :design-doc-info
-   :invoke-design-doc
-   :get-temporary-view
+   :invoke-view
+   :invoke-temporary-view
 
    ;;;
    ;;; Protocols
