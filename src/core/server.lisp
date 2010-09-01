@@ -24,7 +24,7 @@
             &allow-other-keys)
     (remf all-keys :convert-data-p)
     (multiple-value-bind (response status-code)
-        (apply #'http-request (strcat (server->url server) uri)
+        (apply #'http-request (strcat (server-uri server) uri)
                :content-type "application/json"
                :external-format-out +utf-8+
                :basic-authorization (with-slots (username password) server
@@ -43,7 +43,7 @@
                          status-code response))))))
 
 ;; Server functions
-(defun server->url (server)
+(defun server-uri (server)
   "Returns a string representation of the URL SERVER represents."
   (format nil "~A://~A:~A/"
           (if (server-secure-p server)
