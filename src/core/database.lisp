@@ -38,7 +38,7 @@ database protocol."))
 (defun print-database (db stream)
   "Objects implementing the database protocol may use this function in their PRINT-OBJECT method."
   (print-unreadable-object (db stream :type t :identity t)
-    (format stream "~A" (db-namestring db))))
+    (format stream "~A" (db-uri db))))
 
 (defun db-request (db uri &rest all-keys)
   "Sends a CouchDB request to DB."
@@ -61,7 +61,7 @@ translated HTTP status code names. See +status-codes+ for all the currently-reco
   (handle-request (response db "")
     (:ok response)
     (:internal-server-error (error "Illegal database name: ~A" (database-name db)))
-    (:not-found (error 'db-not-found :uri (db-namestring db)))))
+    (:not-found (error 'db-not-found :uri (db-uri db)))))
 
 (defun db-connect (server name)
   "Confirms that a particular CouchDB database exists. If so, returns a new database object that can
@@ -76,7 +76,7 @@ be used to perform operations on it."
     (handle-request (response db "" :method :put)
       (:created db)
       (:internal-server-error (error "Illegal database name: ~A" name))
-      (:precondition-failed (error 'db-already-exists :uri (db-namestring db))))))
+      (:precondition-failed (error 'db-already-exists :uri (db-uri db))))))
 
 (defun ensure-db (server name)
   "Either connects to an existing database, or creates a new one. Returns two values: If a new
@@ -88,7 +88,7 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
   "Deletes a CouchDB database."
   (handle-request (response db "" :method :delete)
     (:ok response)
-    (:not-found (error 'db-not-found :uri (db-namestring db)))))
+    (:not-found (error 'db-not-found :uri (db-uri db)))))
 
 (defun db-compact (db)
   "Triggers a database compaction."
@@ -100,6 +100,6 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
   (handle-request (response db "_changes")
     (:ok response)))
 
-(defun db-namestring (db)
+(defun db-uri (db)
   "Returns a string representing the full URI for DB."
-  (strcat (server->url (database-server db)) (database-name db)))
+  (strcat (server-uri (database-server db)) (database-name db)))
