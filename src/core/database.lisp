@@ -24,6 +24,9 @@
 ;;        to be downcase, and only certain characters being accepted. There is also special meaning
 ;;        behing the use of /, so a mechanism to escape it in certain situations would be good.
 
+(defun url-encode (uri)
+  (cl-ppcre:regex-replace-all "/" uri "%2F"))
+
 ;; Database protocol
 (defgeneric make-db-object (server name)
   (:documentation
@@ -32,7 +35,9 @@ database protocol."))
 (defgeneric database-server (database)
   (:documentation "Returns the server object with which DATABASE is associated."))
 (defgeneric database-name (database)
-  (:documentation "Returns the name of the database, a string."))
+  (:documentation "Returns the name of the database, a string.")
+  (:method :around (database) (declare (ignore database))
+    (url-encode (call-next-method))))
 
 ;; Database functions
 (defun print-database (db stream)

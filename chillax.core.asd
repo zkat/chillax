@@ -4,7 +4,7 @@
   :maintainer "Kat Marchán <kzm@sykosomatic.org>"
   :author "Kat Marchán <kzm@sykosomatic.org>"
   :licence "MIT"
-  :depends-on (flexi-streams drakma)
+  :depends-on (flexi-streams drakma cl-ppcre)
   :serial t
   :components
   ((:module src
