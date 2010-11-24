@@ -1,5 +1,4 @@
 (asdf:defsystem chillax.view-server
-  :version "0.1"
   :description "View server for CouchDB"
   :maintainer "Josh Marchán <sykopomp@sykosomatic.org>"
   :author "Josh Marchán <sykopomp@sykosomatic.org>"

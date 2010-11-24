@@ -1,5 +1,4 @@
 (asdf:defsystem chillax.yason
-  :version "0.2"
   :description "CouchDB abstraction layer - Implementation of protocols using Yason."
   :maintainer "Josh Marchán <sykopomp@sykosomatic.org>"
   :author "Josh Marchán <sykopomp@sykosomatic.org>"
