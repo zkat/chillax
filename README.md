@@ -238,17 +238,29 @@ Self-explanatory readers:
   Basic implementation of the server protocol. JSON data is handled literally as strings, with no
   conversion.
 
+  It supports the following initargs:
+
+  * :host - Host or IP address, in string form, of the CouchDB server. (default: "127.0.0.1")
+  * :port - Port, as an integer, for the CouchDB server. (default: 5984)
+  * :username - Username to use to authenticate with CouchDB server. (default: nil)
+  * :password - Password to uso to authenticate with CouchDB server. (default: nil)
+  * :securep - Whether to use a secure SSL/TLS connection with the server. (default: nil)
+
+
 *[standard class]* `yason-server`
 
   YASON-SERVERs use Yason's JSON parser/encoder to automatically translate content going to/coming
   from the associated CouchDB server.
 
-  It supports the following initargs:
+  YASON-SERVER is a subclass of STANDARD-SERVER, and the same initargs apply.
+
+  It additionally supports the following initargs:
 
   * :array-as-vector-p - If TRUE, parses JSON arrays as Lisp vectors. (default: nil)
   * :boolean-as-symbol-p - If TRUE, parses JSON booleans as symbols instead of CL booleans. (default: nil)
   * :object-as-alist-p - If TRUE, parses JSON objects as alists, instead of hash tables. (default: nil)
   * :parse-object-key-fun - Function to process object keys with. (default: #'CL:IDENTITY)
+
 
 ## Database Protocol
 
