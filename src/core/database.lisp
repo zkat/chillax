@@ -20,13 +20,6 @@
 ;;; Basic database API
 ;;;
 
-;; TODO - CouchDB places restrictions on what sort of URLs are accepted, such as everything having
-;;        to be downcase, and only certain characters being accepted. There is also special meaning
-;;        behing the use of /, so a mechanism to escape it in certain situations would be good.
-
-(defun url-encode (uri)
-  (cl-ppcre:regex-replace-all "/" uri "%2F"))
-
 ;; Database protocol
 (defgeneric make-db-object (server name)
   (:documentation
@@ -35,9 +28,10 @@ database protocol."))
 (defgeneric database-server (database)
   (:documentation "Returns the server object with which DATABASE is associated."))
 (defgeneric database-name (database)
-  (:documentation "Returns the name of the database, a string.")
-  (:method :around (database) (declare (ignore database))
-    (url-encode (call-next-method))))
+  (:documentation
+   "Returns the URL-encoded name of the database, a string. Note that CouchDB accepts certain
+   characters in database names -only- if they are URL-encoded (such as #\/). It is up to individual
+   implementations of DATABASE-NAME to implement this encoding."))
 
 ;; Database functions
 (defun print-database (db stream)
@@ -49,7 +43,8 @@ database protocol."))
   "Sends a CouchDB request to DB."
   (apply #'couch-request (database-server db) (strcat (database-name db) "/" uri) all-keys))
 
-(defmacro handle-request ((result-var db uri &rest db-request-keys &key &allow-other-keys) &body expected-responses)
+(defmacro handle-request ((result-var db uri &rest db-request-keys &key &allow-other-keys)
+                          &body expected-responses)
   "Provides a nice interface to the relatively manual, low-level status-code checking that Chillax
 uses to understand CouchDB's responses. The format for EXPECTED-RESPONSES is the same as the CASE
 macro: The keys should be either keywords, or lists o keywords (not evaluated), which correspond to
@@ -117,11 +112,21 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
     :initarg :server
     :reader database-server)
    (name
-    :initarg :name
     :reader database-name))
   (:documentation
    "Base database class. These objects represent the information required in order to communicate
    with a particular CouchDB database."))
+
+(defun url-encode (string)
+  ;; TODO - escape other characters.
+  (with-output-to-string (s)
+    (loop for char across string
+       do (case char
+            (#\/ (princ "%2F" s))
+            (otherwise (write-char char s))))))
+
+(defmethod initialize-instance :after ((db standard-database) &key name)
+  (setf (slot-value db 'name) (url-encode name)))
 
 (defmethod print-object ((db standard-database) stream)
   (print-database db stream))
