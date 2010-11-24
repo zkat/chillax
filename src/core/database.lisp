@@ -21,10 +21,6 @@
 ;;;
 
 ;; Database protocol
-(defgeneric make-db-object (server name)
-  (:documentation
-"Creates an object which represents a database connection in SERVER. The object must conform to the
-database protocol."))
 (defgeneric database-server (database)
   (:documentation "Returns the server object with which DATABASE is associated."))
 (defgeneric database-name (database)
@@ -109,11 +105,8 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
 ;;; Sample protocol implementation
 ;;;
 (defclass standard-database ()
-  ((server
-    :initarg :server
-    :reader database-server)
-   (name
-    :reader database-name))
+  ((server :reader database-server :initarg :server)
+   (name :reader database-name))
   (:documentation
    "Base database class. These objects represent the information required in order to communicate
    with a particular CouchDB database."))
