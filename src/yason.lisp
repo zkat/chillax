@@ -32,7 +32,7 @@
 
 (defmethod data->json ((server yason-server) data &key)
   (with-output-to-string (s)
-    (if (listp data)
+    (if (parse-object-as-alist-p server)
         (yason:encode-alist data s)
         (yason:encode data s))))
 
