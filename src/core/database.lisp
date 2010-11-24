@@ -54,6 +54,7 @@ translated HTTP status code names. See +status-codes+ for all the currently-reco
          (db-request ,db ,uri ,@db-request-keys)
        (case ,status-code
          ,@expected-responses
+         (:bad-request (error "Bad request: ~A" ,result-var))
          (otherwise (error 'unexpected-response :status-code ,status-code :response ,result-var))))))
 
 (defun db-info (db)
