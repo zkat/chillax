@@ -1,10 +1,13 @@
 # Quickstart example
 
+Chillax is [Quicklisp](http://quicklisp.org)-installable, allowing for super-quick, painless
+installation of Chillax and all its dependencies.
+
 Make sure CouchDB is installed, and currently running. This example assumes that the server is
 running in localhost, using the default 5984 port. Yason's alist encoder/decoder is used below to
-make replies readable.
+make replies readable (by default, it uses hash tables as JSON objects, instead of alists).
 
-    CL-USER> (require 'chillax)
+    CL-USER> (ql:quickload 'chillax)
     CL-USER> (in-package :chillax)
     CHILLAX> (defparameter *server* (make-instance 'yason-server :object-as-alist-p t
                                                    :parse-object-key-fun
@@ -29,13 +32,10 @@ make replies readable.
 
 # Introduction
 
-Chillax is a [CouchDB](http://couchdb.apache.org) abstraction layer for Common Lisp licensed under
-the MIT license. The original author of chillax is [Josh Marchán](http://github.com/sykopomp);
-[Ian McEwen](http://github.com/ianmcorvidae) subsequently worked on CLOS bindings, since
-the original version was written for [Sheeple](http://github.com/sykopomp/sheeple).
+Chillax is a [CouchDB](http://couchdb.apache.org) abstraction layer for Common Lisp.
 
-Chillax also includes a CouchDB view server, which can be made with
-make-chillax-server.lisp. Currently supported by make-chillax-server.lisp are sbcl and ccl.
+Chillax also includes a CouchDB view server, which can be used to write CouchDB views in full,
+native Common Lisp.
 
 Chillax includes several systems:
 
@@ -65,6 +65,9 @@ above. Most Chillax functions will simply return the de-JSON-ified CouchDB respo
 to digging through the response objects for the data you need.
 
 ## Server API
+
+Server objects are created through appropriate protocol implementations. See STANDARD-SERVER, and
+YASON-SERVER below for the included implementations.
 
 *[function]* `server-uri server`
 
@@ -107,11 +110,6 @@ to digging through the response objects for the data you need.
 
 ## Database API
 
-*[function]* `db-info db`
-
-  Fetches info about a given database from the CouchDB server.
-
-
 *[function]* `db-connect server name`
 
   Confirms that a particular CouchDB database exists. If so, returns a new database object that can
@@ -129,6 +127,11 @@ to digging through the response objects for the data you need.
 
   Either connects to an existing database, or creates a new one. Returns two values: If a new
   database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL).
+
+
+*[function]* `db-info db`
+
+  Fetches info about a given database from the CouchDB server.
 
 
 *[function]* `db-delete db`
@@ -205,6 +208,8 @@ custom JSON encoder/decoder, if Yason doesn't fit your needs. Classes that imple
 and their behavior, is documented here, as well.
 
 ## Server Protocol
+
+Self-explanatory readers:
 
 *[generic function]* `server-host server`
 *[generic function]* `server-port server`
@@ -289,6 +294,11 @@ You can load anything you want into the view server image before dumping it, cus
 it executes views in, etc. The source code is fairly short and easy to digest. It's designed to be
 customizable for whatever your needs are.
 
+## Status
+
+Currently, the view server only provides basic features. A future release of Chillax will bring it
+back in sync with CouchDB's current line protocol.
+
 # Yason Problem
 
 Note that, at least on some systems, versions of [Yason](http://github.com/hanshuebner/Yason) prior
@@ -296,3 +306,12 @@ to commit
 [00b9a5c06b7c4113a48518a1f136637efb4458b9](http://github.com/hanshuebner/Yason/commit/00b9a5c06b7c4113a48518a1f136637efb4458b9)
 will not work (in this commit, #\Return was added to the list of whitespace characters
 recognized). Using these versions instead of 0.1 is recommended anyway for performance reasons.
+
+# History
+
+The original author and current maintainer/developer of Chillax is
+[Josh Marchán](http://github.com/sykopomp); [Ian McEwen](http://github.com/ianmcorvidae)
+subsequently worked on CLOS bindings, since the original version was written for
+[Sheeple](http://github.com/sykopomp/sheeple). Chillax has since been mostly rewritten (again) to
+use a simple protocol-based extension API, allowing users to easily extend or alter Chillax's
+behavior, with minimal code.
