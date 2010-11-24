@@ -62,13 +62,15 @@ translated HTTP status code names. See +status-codes+ for all the currently-reco
 
 (defun db-connect (server name)
   "Confirms that a particular CouchDB database exists. If so, returns a new database object that can
-be used to perform operations on it."
+be used to perform operations on it. Will signal a DB-NOT-FOUND error if the database does not
+already exist."
   (let ((db (make-db-object server name)))
     (when (db-info db)
       db)))
 
 (defun db-create (server name)
-  "Creates a new CouchDB database. Returns a database object that can be used to operate on it."
+  "Creates a new CouchDB database. Returns a database object that can be used to operate on it. Will
+signal a DB-ALREADY-EXISTS error if there is already a database with the same NAME in SERVER."
   (let ((db (make-db-object server name)))
     (handle-request (response db "" :method :put)
       (:created db)
@@ -108,8 +110,7 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
   ((server :reader database-server :initarg :server)
    (name :reader database-name))
   (:documentation
-   "Base database class. These objects represent the information required in order to communicate
-   with a particular CouchDB database."))
+   "Minimal, class-based implementation of the database protocol."))
 
 (defun url-encode (string)
   ;; TODO - escape other characters.
