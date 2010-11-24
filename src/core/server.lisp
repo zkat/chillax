@@ -72,8 +72,9 @@ for drakma:http-request are available as kwargs for this message."
                :content-type "application/json"
                :external-format-out +utf-8+
                :external-format-in +utf-8+
-               :basic-authorization (with-slots (username password) server
-                                      (when username (list username password)))
+               :basic-authorization (when (server-username server)
+                                      (list (server-username server)
+                                            (server-password server)))
                :content content
                :content-length content-length
                all-keys)
