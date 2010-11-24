@@ -48,6 +48,10 @@
   (:documentation "Converts DATA to JSON suitable for sending to CouchDB."))
 (defgeneric json->data (server json &key)
   (:documentation "Converts JSON to the desired data structure."))
+(defgeneric make-db-object (server name)
+  (:documentation
+"Creates an object which represents a database connection in SERVER. The object must conform to the
+database protocol."))
 
 (defun couch-request (server uri &rest all-keys
                       &key (content nil contentp) (convert-data-p t)
