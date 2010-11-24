@@ -54,25 +54,30 @@
                       &allow-other-keys)
   "Sends an HTTP request to the CouchDB server represented by SERVER. Most of the keyword arguments
 for drakma:http-request are available as kwargs for this message."
-  (remf all-keys :convert-data-p)
-  (multiple-value-bind (response status-code)
-      (apply #'http-request (strcat (server-uri server) uri)
-             :content-type "application/json"
-             :external-format-out +utf-8+
-             :basic-authorization (with-slots (username password) server
-                                    (when username (list username password)))
-             :content (cond ((and contentp convert-data-p)
-                             (data->json server content))
-                            ((and contentp (not convert-data-p))
-                             content)
-                            (t ""))
-             all-keys)
-    (values (json->data server response)
-            (or (cdr (assoc status-code +status-codes+ :test #'=))
-                ;; The code should never get here once we know all the
-                ;; status codes CouchDB might return.
-                (error "Unknown status code: ~A. HTTP Response: ~A"
-                       status-code response)))))
+  (let* ((content (cond ((and contentp convert-data-p)
+                        (data->json server content))
+                       ((and contentp (not convert-data-p))
+                        content)
+                       (t "")))
+         (content-length (or (getf all-keys :content-length)
+                             (flex:octet-length content :external-format +utf-8+))))
+    (remf all-keys :content-length)
+    (remf all-keys :convert-data-p)
+    (multiple-value-bind (response status-code)
+        (apply #'http-request (strcat (server-uri server) uri)
+               :content-type "application/json"
+               :external-format-out +utf-8+
+               :basic-authorization (with-slots (username password) server
+                                      (when username (list username password)))
+               :content content
+               :content-length content-length
+               all-keys)
+      (values (json->data server response)
+              (or (cdr (assoc status-code +status-codes+ :test #'=))
+                  ;; The code should never get here once we know all the
+                  ;; status codes CouchDB might return.
+                  (error "Unknown status code: ~A. HTTP Response: ~A"
+                         status-code response))))))
 
 ;; Server functions
 (defun server-uri (server)
