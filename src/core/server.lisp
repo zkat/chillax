@@ -127,26 +127,27 @@ reasonably unique, but are not checked against existing UUIDs, so conflicts may 
 (defclass standard-server ()
   ((host
     :reader server-host
-    :initarg :host
-    :initform "127.0.0.1")
+    :initarg :host)
    (port
     :reader server-port
-    :initarg :port
-    :initform 5984)
+    :initarg :port)
    (username
     :reader server-username
-    :initarg :username
-    :initform nil)
+    :initarg :username)
    (password
     :reader server-password
-    :initarg :password
-    :initform nil)
+    :initarg :password)
    (securep
     :reader server-secure-p
-    :initarg :securep
-    :initform nil))
+    :initarg :securep))
   (:documentation
-   "Default implementation of the server protocol."))
+   "Default implementation of the server protocol.")
+  (:default-initargs
+      :host "127.0.0.1"
+    :port 5984
+    :username nil
+    :password nil
+    :securep nil))
 
 (defmethod data->json ((server standard-server) data &key)
   data)
