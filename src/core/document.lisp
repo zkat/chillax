@@ -172,6 +172,6 @@ The CONTENT-TYPE should be a string specifying the content type for DATA."
   "Copies data from the named attachment to OUTPUT-STREAM. Returns the number of bytes copied."
   (multiple-value-bind (attachment-stream must-close-p)
       (get-attachment db doc-id attachment-name)
-    (prog1 (alexandria:copy-stream (flex:flexi-stream-stream attachment-stream) output-stream)
+    (unwind-protect (alexandria:copy-stream (flex:flexi-stream-stream attachment-stream) output-stream)
       (when must-close-p
         (close attachment-stream)))))
