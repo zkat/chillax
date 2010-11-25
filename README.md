@@ -200,6 +200,94 @@ responses from CouchDB. Exact representations will depend on the server being us
   Copies a document's content in-database.
 
 
+## Standalone Attachment API
+
+CouchDB has an API for uploading and downloading standalone attachments.
+
+*[function]* `put-attachment db doc-id attachment-name data &key rev content-type`
+
+  Adds DATA as an attachment. DATA can be a number of things:
+
+  * Stream - The stream will be read until EOF is reached.
+  * Pathname - The file the pathname denotes will be opened and its data uploaded.
+  * Unary function - I don't know yet. Drakma seems to support this.
+
+  If the document already exists, REV is required. This function can be used on non-existent
+  documents. If so, REV is not needed, and a document will be created automatically, and the
+  attachment associated with it.
+
+  The CONTENT-TYPE should be a string specifying the content type for DATA.
+
+
+*[function]* `get-attachment db doc-id attachment-name`
+
+  Returns 3 values:
+
+  1. STREAM - An open flexi-stream that can be READ. In order to read straight binary data, you must first fetch the underlying stream with FLEXI-STREAMS:FLEXI-STREAM-STREAM.
+  2. MUST-CLOSE-P - A boolean. If TRUE, the user must CLOSE this stream themselves once reading is done.
+  3. CONTENT-LENGTH - Declared content length for the incoming data.
+
+
+*[function]* `delete-attachment db doc-id attachment-name doc-revision`
+
+  Deletes an attachment from a document. DOC-REVISION must be the latest revision for the document.
+
+
+*[function]* `copy-attachment db doc-id attachment-name output-stream`
+
+  Copies data from the named attachment to OUTPUT-STREAM. Returns the number of bytes copied.
+
+
+## Design Document API
+
+Chillax currently includes a basic wrapper for Design Document-related operations. This API is
+likely to expand in the future as good ideas reveal themselves. Design documents will still need to
+be created through the regular document API.
+
+*[function]* `view-cleanup db`
+
+  Invokes \_view\_cleanup on DB. Old view output will remain on disk until this is invoked.
+
+
+*[function]* `compact-design-doc db design-doc-name`
+
+  Compaction can really help when you have very large views, very little space, or both.
+
+
+*[function]* `design-doc-info db design-doc-name`
+
+  Returns an object with various bits of status information. Refer to CouchDB documentation for
+  specifics on each value.
+
+
+*[function]* `invoke-view db design-doc-name view-name &key ... (see below) ...`
+
+  Invokes view named by VIEW-NAME in DESIGN-DOC-NAME. Keyword arguments correspond to CouchDB view
+query arguments.
+
+  * key - Single key to search for.
+  * multi-keys - Multiple keys to search for.
+  * startkey - When searching for a range of keys, the key to start from.
+  * endkey - When searching for a range of keys, the key to end at. Whether this is inclusive or not depends on inclusive-end-p (default: true)
+  * inclusive-end-p - If TRUE, endkey is included in the result. (default: true)
+  * startkey-docid - Like startkey, but keyed on the result documents' doc-ids.
+  * endkey-docid - Like endkey, but keyed on the result documents' doc-ids.
+  * limit - Maximum number of results to return.
+  * stalep - If TRUE, CouchDB will not refresh the view, even if it is stalled. (default: false)
+  * descendingp - If TRUE, will return reversed results. (default: false)
+  * skip - Number of documents to skip while querying.
+  * groupp - Controls whether the reduce function reduces to a set of distinct keys, or to a single result row.
+  * group-level - It's complicated. Google it!
+  * reducep - If FALSE, return the view without applying its reduce function (if any). (default: true)
+  * include-docs-p - If TRUE, includes the entire document with the result of the query. (default: false)
+
+
+*[function]* `invoke-temporary-view db &key (map (error)) reduce (language "common-lisp")`
+
+  Invokes a temporary view. These views are meant to be for testing and development purposes, and
+should _not_ be used in actual code.
+
+
 # Core Protocol
 
 You can use the core protocol to customize behavior of Chillax. Writing your own implementation for
