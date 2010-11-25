@@ -97,8 +97,8 @@ query arguments.
                               reduce)
   (let ((json (with-output-to-string (s)
                 (format s "{")
-                (format s ",\"language\":~S" language)
-                (format s "\"map\":~S" map)
+                (format s "\"language\":~S" language)
+                (format s ",\"map\":~S" map)
                 (when reduce
                   (format s ",\"reduce\":~S" reduce))
                 (format s "}"))))
