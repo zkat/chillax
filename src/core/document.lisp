@@ -43,7 +43,7 @@ test the existence of a document."
   "Finds a CouchDB document in DB, named by ID. PARAMS should be an alist containing the parameters
 for the HTTP GET request. If ATTACHMENTSP is TRUE, the document's attachments will be included in
 their entirety in their base64-encoded version. It is not recommended you use this unless you really
-know what you're doing."
+know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on 404."
   (handle-request (response db (url-encode (princ-to-string id))
                             :parameters (if attachmentsp
                                             (cons (cons "attachments" "true") params)

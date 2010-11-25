@@ -160,9 +160,18 @@ All document arguments to these functions must be Lisp objects that the database
 encode to JSON. These functions will likewise return Lisp objects that represent the parsed JSON
 responses from CouchDB. Exact representations will depend on the server being used.
 
-*[function]* `get-document db id &key key startkey endkey limit include-docs`
+*[function]* `get-document db id &key attachmentsp (errorpt)`
 
-  Finds a CouchDB document in DB, named by ID.
+  Finds a CouchDB document in DB, named by ID. PARAMS should be an alist containing the parameters
+for the HTTP GET request. If ATTACHMENTSP is TRUE, the document's attachments will be included in
+their entirety in their base64-encoded version. It is not recommended you use this unless you really
+know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on 404.
+
+
+*[function]* `get-document-revision db doc-id &key (errorp t)`
+
+  Quickly fetches the latest revision for DOC-ID. If ERRORP is NIL, this can be used to quickly test
+  the existence of a document.
 
 
 *[function]* `all-documents db &rest all-keys`
