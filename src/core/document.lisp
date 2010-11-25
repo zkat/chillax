@@ -39,10 +39,15 @@ test the existence of a document."
       (:ok (cdr (assoc :etag headers)))
       (:not-found (when errorp (error 'document-not-found :db db :id doc-id))))))
 
-(defun get-document (db id &key (errorp t) params)
+(defun get-document (db id &key attachmentsp (errorp t) params)
   "Finds a CouchDB document in DB, named by ID. PARAMS should be an alist containing the parameters
-for the HTTP GET request."
-  (handle-request (response db (url-encode (princ-to-string id)) :parameters params)
+for the HTTP GET request. If ATTACHMENTSP is TRUE, the document's attachments will be included in
+their entirety in their base64-encoded version. It is not recommended you use this unless you really
+know what you're doing."
+  (handle-request (response db (url-encode (princ-to-string id))
+                            :parameters (if attachmentsp
+                                            (cons (cons "attachments" "true") params)
+                                            params))
     (:ok response)
     (:not-found (when errorp (error 'document-not-found :db db :id id)))))
 
