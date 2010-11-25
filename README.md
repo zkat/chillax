@@ -40,7 +40,7 @@ native Common Lisp.
 Chillax includes several systems:
 
 * chillax.asd - This is a 'DWIM' system. It uses Yason to parse/encode JSON data. If you don't know
-  what you want, this is probably what you want.
+  what you want, *this is probably what you want*.
 * chillax.core.asd - Core API and protocols for servers, databases, documents, and
   design-docs.
 * chillax.yason.asd - Implementation of the server protocol using Yason's JSON parser.
