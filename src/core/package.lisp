@@ -28,12 +28,19 @@
 
    ;; Document API
    :get-document
+   :get-document-revision
    :all-documents
    :batch-get-documents
    :put-document
    :post-document
    :delete-document
    :copy-document
+
+   ;; Standalone Attachment API
+   :put-attachment
+   :get-attachment
+   :delete-attachment
+   :copy-attachment
 
    ;; Design Document API
    :view-cleanup
