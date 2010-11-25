@@ -75,3 +75,81 @@ may result in duplicate documents because of proxies and other network intermedi
                             :parameters `(,(when revision `("rev" . ,revision))))
     (:created response)
     (:not-found (error 'document-not-found :db db :id from-id))))
+
+;;;
+;;; Standalone Attachments
+;;;
+(defun put-attachment (db doc-id attachment-name data &optional doc-revision)
+  "Adds DATA as an attachment. DATA can be a number of things:
+
+  * Stream - The stream will be read until EOF is reached.
+  * Pathname - The file the pathname denotes will be opened and its data uploaded.
+  * Unary function - I don't know yet. Drakma seems to support this.
+
+If the document already exists, DOC-REVISION is required. This function can be used on non-existent
+documents. If so, DOC-REVISION is not needed, and a document will be created automatically, and the
+attachment associated with it."
+  (multiple-value-bind (response status-code)
+      (http-request (strcat (server-uri (database-server db))
+                            (database-name db)
+                            (url-encode (princ-to-string doc-id))
+                            attachment-name)
+                    :method :put
+                    :parameters (when doc-revision
+                                  `(("rev" . ,doc-revision)))
+                    :content data)
+    (case (or (cdr (assoc status-code +status-codes+ :test #'=))
+              (error "Unknown status code: ~A. HTTP Response: ~A"
+                     status-code response))
+      (:ok (data->json (database-server db) response))
+      (:not-found (error 'document-not-found :db db :id doc-id))
+      (otherwise (error 'unexpected-response :status-code status-code :response response)))))
+
+(defun get-attachment (db doc-id attachment-name)
+  "Returns 3 values:
+
+  1. STREAM - An open flexi-stream that can be READ. In order to read straight binary data, you must
+              first fetch the underlying stream with FLEXI-STREAMS:FLEXI-STREAM-STREAM.
+  2. MUST-CLOSE-P - A boolean. If TRUE, the user must CLOSE this stream themselves
+     once reading is done.
+  3. CONTENT-LENGTH - Declared content length for the incoming data."
+  (multiple-value-bind (response status-code headers fourth fifth must-close-p)
+      (http-request (strcat (server-uri (database-server db))
+                            (database-name db)
+                            (url-encode (princ-to-string doc-id))
+                            attachment-name)
+                    :want-stream t)
+    (declare (ignore fourth fifth))
+    (case (or (cdr (assoc status-code +status-codes+ :test #'=))
+              (error "Unknown status code: ~A. HTTP Response: ~A"
+                     status-code response))
+      (:ok (values response must-close-p
+                   (let ((content-length (cdr (assoc :content-length headers))))
+                     (when content-length (parse-integer content-length)))))
+      (:not-found (error 'document-not-found :db db :id doc-id))
+      (otherwise (when (streamp response) (close response))
+                 (error 'unexpected-response :status-code status-code :response response)))))
+
+(defun delete-attachment (db doc-id attachment-name doc-revision)
+  "Deletes an attachment from a document. DOC-REVISION must be the latest revision for the document."
+  (multiple-value-bind (response status-code)
+      (http-request (strcat (server-uri (database-server db))
+                            (database-name db)
+                            (url-encode (princ-to-string doc-id))
+                            attachment-name)
+                    :method :delete
+                    :parameters `(("rev" . ,doc-revision)))
+    (case (or (cdr (assoc status-code +status-codes+ :test #'=))
+              (error "Unknown status code: ~A. HTTP Response: ~A"
+                     status-code response))
+      (:ok (data->json (database-server db) response))
+      (:not-found (error 'document-not-found :db db :id doc-id))
+      (otherwise (error 'unexpected-response :status-code status-code :response response)))))
+
+(defun copy-attachment (db doc-id attachment-name output-stream)
+  "Copies data from the named attachment to OUTPUT-STREAM. Returns the number of bytes copied."
+  (multiple-value-bind (attachment-stream must-close-p)
+      (get-attachment db doc-id attachment-name)
+    (prog1 (alexandria:copy-stream (flex:flexi-stream-stream attachment-stream) output-stream)
+      (when must-close-p
+        (close attachment-stream)))))
