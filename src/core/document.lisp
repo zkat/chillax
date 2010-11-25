@@ -25,18 +25,12 @@
 ;;;
 ;;; Direct Document API
 ;;;
-(defun get-document (db id &key (errorp t) key startkey endkey limit include-docs &aux params)
-  "Finds a CouchDB document in DB, named by ID."
-  (flet ((add-param (key value)
-           (push (cons key (prin1-to-string value)) params)))
-    (when key (add-param "key" key))
-    (when startkey (add-param "startkey" startkey))
-    (when endkey (add-param "endkey" endkey))
-    (when limit (add-param "limit" limit))
-    (when include-docs (add-param "include_docs" "true"))
-    (handle-request (response db (princ-to-string id) :parameters params)
-      (:ok response)
-      (:not-found (when errorp (error 'document-not-found :db db :id id))))))
+(defun get-document (db id &key (errorp t) params)
+  "Finds a CouchDB document in DB, named by ID. PARAMS should be an alist containing the parameters
+for the HTTP GET request."
+  (handle-request (response db (princ-to-string id) :parameters params)
+    (:ok response)
+    (:not-found (when errorp (error 'document-not-found :db db :id id)))))
 
 (defun all-documents (db &rest all-keys)
   "Requests the \_all\_docs document. ALL-KEYS correspond to GET-DOCUMENT's keyword arguments."
