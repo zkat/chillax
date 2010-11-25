@@ -93,16 +93,18 @@ may result in duplicate documents because of proxies and other network intermedi
 ;;;
 ;;; Standalone Attachments
 ;;;
-(defun put-attachment (db doc-id attachment-name data &optional doc-revision)
+(defun put-attachment (db doc-id attachment-name data &key rev content-type)
   "Adds DATA as an attachment. DATA can be a number of things:
 
   * Stream - The stream will be read until EOF is reached.
   * Pathname - The file the pathname denotes will be opened and its data uploaded.
   * Unary function - I don't know yet. Drakma seems to support this.
 
-If the document already exists, DOC-REVISION is required. This function can be used on non-existent
-documents. If so, DOC-REVISION is not needed, and a document will be created automatically, and the
-attachment associated with it."
+If the document already exists, REV is required. This function can be used on non-existent
+documents. If so, REV is not needed, and a document will be created automatically, and the
+attachment associated with it.
+
+The CONTENT-TYPE should be a string specifying the content type for DATA."
   (multiple-value-bind (response status-code)
       (http-request (strcat (server-uri (database-server db))
                             (database-name db)
@@ -111,7 +113,8 @@ attachment associated with it."
                     :method :put
                     :parameters (when doc-revision
                                   `(("rev" . ,doc-revision)))
-                    :content data)
+                    :content data
+                    :content-type content-type)
     (case (or (cdr (assoc status-code +status-codes+ :test #'=))
               (error "Unknown status code: ~A. HTTP Response: ~A"
                      status-code response))
