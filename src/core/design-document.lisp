@@ -1,9 +1,5 @@
 (in-package :chillax.core)
 
-;; TODO - the document API automatically URL-encodes document names, but
-;;        design documents are allowed to have / in their names.
-;;        Something will have to give.
-
 ;;;
 ;;; Design Doc basics
 ;;;
@@ -110,7 +106,8 @@ query arguments.
                               descendingp groupp group-level
                               reducep stalep include-docs-p
                               inclusive-end-p)
-  "Invokes a temporary view."
+  "Invokes a temporary view. These views are meant to be for testing and development purposes, and
+should _not_ be used in actual code."
   ;; I'm not sure CouchDB actually accepts all the view parameters for temporary views...
   (declare (ignore key startkey startkey-docid endkey endkey-docid limit skip descendingp
                    groupp group-level reducep stalep include-docs-p inclusive-end-p))
