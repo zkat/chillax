@@ -17,19 +17,49 @@
     (:ok response)
     (:not-found (error 'document-not-found :db db :id design-doc-name))))
 
-(defun invoke-view (db design-doc-name view-name &key errorp
-                    key startkey startkey-docid endkey
-                    endkey-docid limit skip
-                    (descendingp nil descendingpp)
-                    (groupp nil grouppp) group-level
-                    (reducep t reducepp) stalep
-                    (include-docs-p nil include-docs-p-p)
-                    (inclusive-end-p t inclusive-end-p-p)
-                    &aux params)
+(defun build-view-params (&key
+                          key startkey startkey-docid endkey
+                          endkey-docid limit skip
+                          (descendingp nil descendingpp)
+                          (groupp nil grouppp) group-level
+                          (reducep t reducepp) stalep
+                          (include-docs-p nil include-docs-p-p)
+                          (inclusive-end-p t inclusive-end-p-p)
+                          &allow-other-keys)
+  (let ((params ()))
+    (labels ((%param (key value)
+               (push (cons key (princ-to-string value)) params))
+             (maybe-param (test name value)
+               (when test (%param name value)))
+             (param (name value)
+               (maybe-param value name value)))
+      (param "key" key)
+      (param "startkey" startkey)
+      (param "endkey" endkey)
+      (maybe-param inclusive-end-p-p "inclusive_end" (if inclusive-end-p "true" "false"))
+      (param "startkey_docid" startkey-docid)
+      (param "endkey_docid" endkey-docid)
+      (param "limit" limit)
+      (maybe-param stalep "stale" "ok")
+      (maybe-param descendingpp "descending" (if descendingp "true" "false"))
+      (param "skip" skip)
+      (maybe-param grouppp "group" (if groupp "true" "false"))
+      (param "group_level" group-level)
+      (maybe-param reducepp "reduce" (if reducep "true" "false"))
+      (maybe-param include-docs-p-p "include_docs" (if include-docs-p "true" "false")))
+    params))
+
+(defun invoke-view (db design-doc-name view-name &rest all-keys
+                    &key key startkey startkey-docid endkey
+                    multi-keys endkey-docid limit skip
+                    descendingp groupp group-level
+                    reducep stalep include-docs-p
+                    inclusive-end-p)
   "Invokes view named by VIEW-NAME in DESIGN-DOC-NAME. Keyword arguments correspond to CouchDB view
 query arguments.
 
   * key - Single key to search for.
+  * multi-keys - Multiple keys to search for.
   * startkey - When searching for a range of keys, the key to start from.
   * endkey - When searching for a range of keys, the key to end at. Whether this is inclusive or not
     depends on inclusive-end-p (default: true)
@@ -45,29 +75,18 @@ query arguments.
   * group-level - It's complicated. Google it!
   * reducep - If FALSE, return the view without applying its reduce function (if any). (default: true)
   * include-docs-p - If TRUE, includes the entire document with the result of the query. (default: false)"
-  (let ((server (database-server db)))
-    (labels ((%param (key value)
-               (push (cons key value) params))
-             (maybe-param (test key value)
-               (when test (%param key value)))
-             (param (name value)
-               (when value (%param name (data->json server value)))))
-      (param "key" key)
-      (param "startkey" startkey)
-      (param "endkey" endkey)
-      (maybe-param inclusive-end-p-p "inclusive_end" (if inclusive-end-p "true" "false"))
-      (param "startkey_docid" startkey-docid)
-      (param "endkey_docid" endkey-docid)
-      (param "limit" limit)
-      (maybe-param stalep "stale" "ok")
-      (maybe-param descendingpp "descending" (if descendingp "true" "false"))
-      (param "skip" skip)
-      (maybe-param grouppp "group" (if groupp "true" "false"))
-      (param "group_level" group-level)
-      (maybe-param reducepp "reduce" (if reducep "true" "false"))
-      (maybe-param include-docs-p-p "include_docs" (if include-docs-p "true" "false")))
-    (get-document db (strcat "_design/" design-doc-name "_view/" view-name)
-                  :errorp errorp :params params)))
+  (declare (ignore key startkey startkey-docid endkey endkey-docid limit skip descendingp
+                   groupp group-level reducep stalep include-docs-p inclusive-end-p))
+  (let ((params (apply #'build-view-params all-keys))
+        (doc-name (strcat "_design/" design-doc-name "_view/" view-name)))
+    (if multi-keys
+        ;; If we receive the MULTI-KEYS argument, we have to do a POST instead.
+        (handle-request (response db doc-name :method :post
+                                  :parameters params
+                                  :content (format nil "{\"keys\":[~{~S~^,~}]}" multi-keys)
+                                  :convert-data-p nil)
+          (:ok response))
+        (get-document db doc-name :params params))))
 
 ;;;
 ;;; Views
