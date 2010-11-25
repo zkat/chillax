@@ -1,18 +1,26 @@
 (in-package :chillax.core)
 
+;; TODO - the document API automatically URL-encodes document names, but
+;;        design documents are allowed to have / in their names.
+;;        Something will have to give.
+
 ;;;
 ;;; Design Doc basics
 ;;;
 (defun view-cleanup (db)
+  "Invokes _view_cleanup on DB. Old view output will remain on disk until this is invoked."
   (handle-request (response db "_view_cleanup" :method :post)
     (:accepted response)))
 
 (defun compact-design-doc (db design-doc-name)
+  "Compaction can really help when you have very large views, very little space, or both."
   (handle-request (response db (strcat "_compact/" design-doc-name) :method :post)
     (:accepted response)
     (:not-found (error 'document-not-found :db db :id design-doc-name))))
 
 (defun design-doc-info (db design-doc-name)
+  "Returns an object with various bits of status information. Refer to CouchDB documentation for
+specifics on each value."
   (handle-request (response db (strcat "_design/" design-doc-name "/_info"))
     (:ok response)
     (:not-found (error 'document-not-found :db db :id design-doc-name))))
@@ -102,6 +110,7 @@ query arguments.
                               descendingp groupp group-level
                               reducep stalep include-docs-p
                               inclusive-end-p)
+  "Invokes a temporary view."
   ;; I'm not sure CouchDB actually accepts all the view parameters for temporary views...
   (declare (ignore key startkey startkey-docid endkey endkey-docid limit skip descendingp
                    groupp group-level reducep stalep include-docs-p inclusive-end-p))
