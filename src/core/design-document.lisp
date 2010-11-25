@@ -78,7 +78,7 @@ query arguments.
   (declare (ignore key startkey startkey-docid endkey endkey-docid limit skip descendingp
                    groupp group-level reducep stalep include-docs-p inclusive-end-p))
   (let ((params (apply #'build-view-params all-keys))
-        (doc-name (strcat "_design/" design-doc-name "_view/" view-name)))
+        (doc-name (strcat "_design/" (princ-to-string design-doc-name) "_view/" view-name)))
     (if multi-keys
         ;; If we receive the MULTI-KEYS argument, we have to do a POST instead.
         (handle-request (response db doc-name :method :post
@@ -86,7 +86,10 @@ query arguments.
                                   :content (format nil "{\"keys\":[~{~S~^,~}]}" multi-keys)
                                   :convert-data-p nil)
           (:ok response))
-        (get-document db doc-name :params params))))
+        (handle-request (response db (strcat "_design/" doc-name)
+                                  :params params)
+          (:ok response)
+          (:not-found (error 'document-not-found :db db :id design-doc-name))))))
 
 ;;;
 ;;; Views
