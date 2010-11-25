@@ -299,11 +299,11 @@ and their behavior, is documented here, as well.
 
 Self-explanatory readers:
 
-*[generic function]* `server-host server`
-*[generic function]* `server-port server`
-*[generic function]* `server-username server`
-*[generic function]* `server-password server`
-*[generic function]* `server-secure-p server`
+* *[generic function]* `server-host server`
+* *[generic function]* `server-port server`
+* *[generic function]* `server-username server`
+* *[generic function]* `server-password server`
+* *[generic function]* `server-secure-p server`
 
 *[generic function]* `data->json server data &key`
 
