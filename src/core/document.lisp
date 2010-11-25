@@ -33,7 +33,7 @@ for the HTTP GET request."
     (:not-found (when errorp (error 'document-not-found :db db :id id)))))
 
 (defun all-documents (db &rest all-keys)
-  "Requests the \_all\_docs document. ALL-KEYS correspond to GET-DOCUMENT's keyword arguments."
+  "Requests the _all_docs document. ALL-KEYS correspond to GET-DOCUMENT's keyword arguments."
   (apply #'get-document db "_all_docs" all-keys))
 
 (defun batch-get-documents (db &rest doc-ids)
