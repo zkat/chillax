@@ -91,18 +91,27 @@ query arguments.
 ;;;
 ;;; Views
 ;;;
-(defun invoke-temporary-view (db &key
-                              (language "common-lisp")
+(defun invoke-temporary-view (db &rest all-keys
+                              &key (language "common-lisp") reduce
                               (map (error "Must provide a map function for temporary views."))
-                              reduce)
+                              key startkey startkey-docid endkey
+                              endkey-docid limit skip
+                              descendingp groupp group-level
+                              reducep stalep include-docs-p
+                              inclusive-end-p)
+  ;; I'm not sure CouchDB actually accepts all the view parameters for temporary views...
+  (declare (ignore key startkey startkey-docid endkey endkey-docid limit skip descendingp
+                   groupp group-level reducep stalep include-docs-p inclusive-end-p))
   (let ((json (with-output-to-string (s)
                 (format s "{")
                 (format s "\"language\":~S" language)
                 (format s ",\"map\":~S" map)
                 (when reduce
                   (format s ",\"reduce\":~S" reduce))
-                (format s "}"))))
+                (format s "}")))
+        (params (apply #'build-view-params all-keys)))
     (handle-request (response db "_temp_view" :method :post
+                              :parameters params
                               :content json
                               :convert-data-p nil)
       (:ok response))))
