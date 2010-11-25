@@ -340,7 +340,7 @@ Self-explanatory readers:
   * :host - Host or IP address, in string form, of the CouchDB server. (default: "127.0.0.1")
   * :port - Port, as an integer, for the CouchDB server. (default: 5984)
   * :username - Username to use to authenticate with CouchDB server. (default: nil)
-  * :password - Password to uso to authenticate with CouchDB server. (default: nil)
+  * :password - Password to use to authenticate with CouchDB server. (default: nil)
   * :securep - Whether to use a secure SSL/TLS connection with the server. (default: nil)
 
 
