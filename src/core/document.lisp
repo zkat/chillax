@@ -28,7 +28,7 @@
 (defun get-document (db id &key (errorp t) params)
   "Finds a CouchDB document in DB, named by ID. PARAMS should be an alist containing the parameters
 for the HTTP GET request."
-  (handle-request (response db (princ-to-string id) :parameters params)
+  (handle-request (response db (url-encode (princ-to-string id)) :parameters params)
     (:ok response)
     (:not-found (when errorp (error 'document-not-found :db db :id id)))))
 
@@ -49,7 +49,7 @@ results will be returned, and it's the user's responsibility to deal with any mi
 
 (defun put-document (db id doc &key batch-ok-p)
   "Puts a document into DB, using ID."
-  (handle-request (response db (princ-to-string id) :method :put :content doc
+  (handle-request (response db (url-encode (princ-to-string id)) :method :put :content doc
                             :parameters (when batch-ok-p '(("batch" . "ok"))))
     ((:created :accepted) response)
     (:conflict (error 'document-conflict :id id :doc doc))))
@@ -64,13 +64,13 @@ may result in duplicate documents because of proxies and other network intermedi
 
 (defun delete-document (db id revision)
   "Deletes an existing document."
-  (handle-request (response db (format nil "~A?rev=~A" id revision) :method :delete)
+  (handle-request (response db (url-encode (format nil "~A?rev=~A" id revision)) :method :delete)
     (:ok response)
     (:not-found (error 'document-not-found :db db :id id))))
 
 (defun copy-document (db from-id to-id &key revision)
   "Copies a document's content in-database."
-  (handle-request (response db (princ-to-string from-id) :method :copy
+  (handle-request (response db (url-encode (princ-to-string from-id)) :method :copy
                             :additional-headers `(("Destination" . ,(princ-to-string to-id)))
                             :parameters `(,(when revision `("rev" . ,revision))))
     (:created response)
