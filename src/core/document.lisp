@@ -116,8 +116,8 @@ The CONTENT-TYPE should be a string specifying the content type for DATA."
                             (url-encode (princ-to-string doc-id))
                             attachment-name)
                     :method :put
-                    :parameters (when doc-revision
-                                  `(("rev" . ,doc-revision)))
+                    :parameters (when rev
+                                  `(("rev" . ,rev)))
                     :content data
                     :content-type content-type)
     (case (or (cdr (assoc status-code +status-codes+ :test #'=))
