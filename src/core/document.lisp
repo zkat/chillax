@@ -97,6 +97,18 @@ results will be returned, and it's the user's responsibility to deal with any mi
                             :convert-data-p nil)
     (:ok response)))
 
+(defun bulk-post-documents (db documents &key all-or-nothing-p)
+  (let ((as-json (data->json (database-server db) documents)))
+    (handle-request (response db "_bulk_docs" :method :post
+                              :content (with-output-to-string (s)
+                                         (princ "{\"docs\":" s)
+                                         (princ as-json s)
+                                         (when all-or-nothing-p
+                                           (princ ",\"all_or_nothing\":true" s))
+                                         (princ "}" s))
+                              :convert-data-p nil)
+      (:ok response))))
+
 ;;;
 ;;; Standalone Attachments
 ;;;
