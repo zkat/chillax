@@ -184,7 +184,8 @@ know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on
 
   POSTs a document into DB. CouchDB will automatically assign a UUID if the document does not
   already exist. Note that using this function is discouraged in the CouchDB documentation, since it
-  may result in duplicate documents because of proxies and other network intermediaries.
+  may result in duplicate documents because of proxies and other network intermediaries. If what you
+  need is to create a new document with a generated id, consider using GET-UUIDS with PUT-DOCUMENT.
 
 
 *[function]* `delete-document db id revision`
@@ -289,7 +290,7 @@ be created through the regular document API.
 *[function]* `query-view db design-doc-name view-name &key ... (see below) ...`
 
   Queries view named by VIEW-NAME in DESIGN-DOC-NAME. Keyword arguments correspond to CouchDB view
-query arguments.
+  query arguments.
 
   * key - Single key to search for.
   * multi-keys - Multiple keys to search for.
@@ -311,7 +312,7 @@ query arguments.
 *[function]* `query-temporary-view db &key (map (error)) reduce (language "common-lisp")`
 
   Queries a temporary view. These views are meant to be for testing and development purposes, and
-should _not_ be used in actual code.
+  should _not_ be used in actual code.
 
 
 # Core Protocol

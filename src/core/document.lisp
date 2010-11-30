@@ -61,7 +61,8 @@ know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on
 (defun post-document (db doc)
   "POSTs a document into DB. CouchDB will automatically assign a UUID if the document does not
 already exist. Note that using this function is discouraged in the CouchDB documentation, since it
-may result in duplicate documents because of proxies and other network intermediaries."
+may result in duplicate documents because of proxies and other network intermediaries. If what you
+need is to create a new document with a generated id, consider using GET-UUIDS with PUT-DOCUMENT."
   (handle-request (response db "" :method :post :content doc)
     ((:created :accepted) response)
     (:conflict (error 'document-conflict :doc doc))))
