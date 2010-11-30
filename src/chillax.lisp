@@ -6,3 +6,6 @@
     (export s (find-package "CHILLAX")))
   (do-external-symbols (s (find-package "CHILLAX.YASON"))
     (export s (find-package "CHILLAX"))))
+
+(defparameter *chillax-version* "0.5")
+(export '*chillax-version*)
