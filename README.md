@@ -174,18 +174,6 @@ know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on
   the existence of a document.
 
 
-*[function]* `all-documents db &rest all-keys`
-
-  Requests the \_all\_docs document. ALL-KEYS correspond to GET-DOCUMENT's keyword arguments.
-
-
-*[function]* `batch-get-documents db &rest doc-ids`
-
-  Uses \_all\_docs to quickly fetch the given DOC-IDs in a single request. Note that this function
-  will NOT signal a DOCUMENT-NOT-FOUND error when one or more DOC-IDs are not found. Instead, the
-  results will be returned, and it's the user's responsibility to deal with any missing docs.
-
-
 *[function]* `put-document db id doc &key batch-ok-p`
 
   Puts a document into DB, using ID. DOC must be Lisp data that DB's server is able to convert to
@@ -207,6 +195,35 @@ know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on
 *[function]* `copy-document from-id to-id &key revision`
 
   Copies a document's content in-database.
+
+
+## Bulk Documents API
+
+CouchDB supports a bulk document API for fetching, updating, and deleting documents in batches.  For
+more details on this API, refer to
+[HTTP Bulk Document API](http://wiki.apache.org/couchdb/HTTP_Bulk_Document_API)
+
+*[function]* `all-documents db &rest all-keys`
+
+  Requests the \_all\_docs document. ALL-KEYS correspond to GET-DOCUMENT's keyword arguments.
+
+
+*[function]* `batch-get-documents db &rest doc-ids`
+
+  Uses \_all\_docs to quickly fetch the given DOC-IDs in a single request. Note that this function
+  will NOT signal a DOCUMENT-NOT-FOUND error when one or more DOC-IDs are not found. Instead, the
+  results will be returned, and it's the user's responsibility to deal with any missing docs.
+
+
+*[function]* `bulk-post-documents documents &key all-or-nothing-p`
+
+  Allows you to update or submit multiple documents at the same time, using CouchDB's _bulk_docs
+  API. In order to delete a document through this API, the document must have a _document attribute
+  with JSON 'true' as its value (note that what gets translated into 'true' depends on the server).
+
+  DOCUMENTS must be a sequence or sequence-like (depending on what DATA->JSON will do to it).
+
+  If ALL-OR-NOTHING-P is true, the entire submission will fail if a single one fails."
 
 
 ## Standalone Attachment API
