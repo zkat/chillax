@@ -87,7 +87,7 @@ may result in duplicate documents because of proxies and other network intermedi
   "Requests the _all_docs document. ALL-KEYS correspond to GET-DOCUMENT's keyword arguments."
   (apply #'get-document db "_all_docs" all-keys))
 
-(defun batch-get-documents (db &rest doc-ids)
+(defun batch-get-documents (db doc-ids)
   "Uses _all_docs to quickly fetch the given DOC-IDs in a single request. Note that this function
 will NOT signal a DOCUMENT-NOT-FOUND error when one or more DOC-IDs are not found. Instead, the
 results will be returned, and it's the user's responsibility to deal with any missing docs."
