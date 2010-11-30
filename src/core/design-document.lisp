@@ -53,13 +53,13 @@ specifics on each value."
       (maybe-param include-docs-p-p "include_docs" (if include-docs-p "true" "false")))
     params))
 
-(defun invoke-view (db design-doc-name view-name &rest all-keys
-                    &key key startkey startkey-docid endkey
-                    multi-keys endkey-docid limit skip
-                    descendingp groupp group-level
-                    reducep stalep include-docs-p
-                    inclusive-end-p)
-  "Invokes view named by VIEW-NAME in DESIGN-DOC-NAME. Keyword arguments correspond to CouchDB view
+(defun query-view (db design-doc-name view-name &rest all-keys
+                   &key key startkey startkey-docid endkey
+                   multi-keys endkey-docid limit skip
+                   descendingp groupp group-level
+                   reducep stalep include-docs-p
+                   inclusive-end-p)
+  "Queries view named by VIEW-NAME in DESIGN-DOC-NAME. Keyword arguments correspond to CouchDB view
 query arguments.
 
   * key - Single key to search for.
@@ -98,15 +98,14 @@ query arguments.
 ;;;
 ;;; Views
 ;;;
-(defun invoke-temporary-view (db &rest all-keys
-                              &key (language "common-lisp") reduce
-                              (map (error "Must provide a map function for temporary views."))
-                              key startkey startkey-docid endkey
-                              endkey-docid limit skip
-                              descendingp groupp group-level
-                              reducep stalep include-docs-p
-                              inclusive-end-p)
-  "Invokes a temporary view. These views are meant to be for testing and development purposes, and
+(defun query-temporary-view (db &rest all-keys &key (language "common-lisp") reduce
+                             (map (error "Must provide a map function for temporary views."))
+                             key startkey startkey-docid endkey
+                             endkey-docid limit skip
+                             descendingp groupp group-level
+                             reducep stalep include-docs-p
+                             inclusive-end-p)
+  "Queries a temporary view. These views are meant to be for testing and development purposes, and
 should _not_ be used in actual code."
   ;; I'm not sure CouchDB actually accepts all the view parameters for temporary views...
   (declare (ignore key startkey startkey-docid endkey endkey-docid limit skip descendingp
