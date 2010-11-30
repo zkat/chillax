@@ -198,7 +198,7 @@ know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on
   Copies a document's content in-database.
 
 
-## Bulk Documents API
+## Bulk Document API
 
 CouchDB supports a bulk document API for fetching, updating, and deleting documents in batches.  For
 more details on this API, refer to
@@ -332,6 +332,7 @@ Self-explanatory readers:
 * *[generic function]* `server-password server`
 * *[generic function]* `server-secure-p server`
 
+
 *[generic function]* `data->json server data &key`
 
   Converts DATA to JSON suitable for sending to CouchDB.
@@ -341,10 +342,12 @@ Self-explanatory readers:
 
   Converts JSON to the desired data structure.
 
+
 *[generic function]* `make-db-object server name`
 
   Creates an object which represents a database connection in SERVER. The object must conform to the
   database protocol.
+
 
 ### Included protocol implementations
 
