@@ -51,21 +51,6 @@ know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on
     (:ok response)
     (:not-found (when errorp (error 'document-not-found :db db :id id)))))
 
-(defun all-documents (db &rest all-keys)
-  "Requests the _all_docs document. ALL-KEYS correspond to GET-DOCUMENT's keyword arguments."
-  (apply #'get-document db "_all_docs" all-keys))
-
-(defun batch-get-documents (db &rest doc-ids)
-  "Uses _all_docs to quickly fetch the given DOC-IDs in a single request. Note that this function
-will NOT signal a DOCUMENT-NOT-FOUND error when one or more DOC-IDs are not found. Instead, the
-results will be returned, and it's the user's responsibility to deal with any missing docs."
-  (handle-request (response db "_all_docs" :method :post
-                            :parameters '(("include_docs" . "true"))
-                            :content (format nil "{\"keys\":[~{~S~^,~}]}" doc-ids)
-                            :convert-data-p nil)
-    (:ok response)))
-
-
 (defun put-document (db id doc &key batch-ok-p)
   "Puts a document into DB, using ID."
   (handle-request (response db (url-encode (princ-to-string id)) :method :put :content doc
@@ -94,6 +79,23 @@ may result in duplicate documents because of proxies and other network intermedi
                             :parameters `(,(when revision `("rev" . ,revision))))
     (:created response)
     (:not-found (error 'document-not-found :db db :id from-id))))
+
+;;;
+;;; Bulk Document API
+;;;
+(defun all-documents (db &rest all-keys)
+  "Requests the _all_docs document. ALL-KEYS correspond to GET-DOCUMENT's keyword arguments."
+  (apply #'get-document db "_all_docs" all-keys))
+
+(defun batch-get-documents (db &rest doc-ids)
+  "Uses _all_docs to quickly fetch the given DOC-IDs in a single request. Note that this function
+will NOT signal a DOCUMENT-NOT-FOUND error when one or more DOC-IDs are not found. Instead, the
+results will be returned, and it's the user's responsibility to deal with any missing docs."
+  (handle-request (response db "_all_docs" :method :post
+                            :parameters '(("include_docs" . "true"))
+                            :content (format nil "{\"keys\":[~{~S~^,~}]}" doc-ids)
+                            :convert-data-p nil)
+    (:ok response)))
 
 ;;;
 ;;; Standalone Attachments
