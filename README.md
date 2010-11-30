@@ -286,9 +286,9 @@ be created through the regular document API.
   specifics on each value.
 
 
-*[function]* `invoke-view db design-doc-name view-name &key ... (see below) ...`
+*[function]* `query-view db design-doc-name view-name &key ... (see below) ...`
 
-  Invokes view named by VIEW-NAME in DESIGN-DOC-NAME. Keyword arguments correspond to CouchDB view
+  Queries view named by VIEW-NAME in DESIGN-DOC-NAME. Keyword arguments correspond to CouchDB view
 query arguments.
 
   * key - Single key to search for.
@@ -308,9 +308,9 @@ query arguments.
   * include-docs-p - If TRUE, includes the entire document with the result of the query. (default: false)
 
 
-*[function]* `invoke-temporary-view db &key (map (error)) reduce (language "common-lisp")`
+*[function]* `query-temporary-view db &key (map (error)) reduce (language "common-lisp")`
 
-  Invokes a temporary view. These views are meant to be for testing and development purposes, and
+  Queries a temporary view. These views are meant to be for testing and development purposes, and
 should _not_ be used in actual code.
 
 
