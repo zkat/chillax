@@ -99,6 +99,13 @@ results will be returned, and it's the user's responsibility to deal with any mi
     (:ok response)))
 
 (defun bulk-post-documents (db documents &key all-or-nothing-p)
+  "Allows you to update or submit multiple documents at the same time, using CouchDB's _bulk_docs
+API. In order to delete a document through this API, the document must have a _document attribute
+with JSON 'true' as its value (note that what gets translated into 'true' depends on the server).
+
+DOCUMENTS must be a sequence or sequence-like (depending on what DATA->JSON will do to it).
+
+If ALL-OR-NOTHING-P is true, the entire submission will fail if a single one fails."
   (let ((as-json (data->json (database-server db) documents)))
     (handle-request (response db "_bulk_docs" :method :post
                               :content (with-output-to-string (s)
