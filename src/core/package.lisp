@@ -29,12 +29,13 @@
    ;; Document API
    :get-document
    :get-document-revision
-   :all-documents
-   :batch-get-documents
    :put-document
    :post-document
    :delete-document
    :copy-document
+   :all-documents
+   :batch-get-documents
+   :bulk-post-documents
 
    ;; Standalone Attachment API
    :put-attachment
