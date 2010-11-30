@@ -93,7 +93,8 @@ will NOT signal a DOCUMENT-NOT-FOUND error when one or more DOC-IDs are not foun
 results will be returned, and it's the user's responsibility to deal with any missing docs."
   (handle-request (response db "_all_docs" :method :post
                             :parameters '(("include_docs" . "true"))
-                            :content (format nil "{\"keys\":[~{~S~^,~}]}" doc-ids)
+                            :content (format nil "{\"keys\":~S}"
+                                             (data->json (database-server db) doc-ids))
                             :convert-data-p nil)
     (:ok response)))
 
