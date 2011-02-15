@@ -445,3 +445,10 @@ subsequently worked on CLOS bindings, since the original version was written for
 [Sheeple](http://github.com/zkat/sheeple). Chillax has since been mostly rewritten (again) to
 use a simple protocol-based extension API, allowing users to easily extend or alter Chillax's
 behavior, with minimal code.
+
+# Contributors
+
+* Kat Marchán <kzm@sykosomatic.org>
+* Adlai Chandrasekhar <munchking@gmail.com>
+* Ian McEwen <ianmcorvidae@ianmcorvidae.net>
+* Felix Lange <fjl@twurst.com>
