@@ -1,7 +1,7 @@
 (cl:defpackage :chillax.utils
   (:use :cl :alexandria)
   (:export
-   :fun :mkhash :hashget :strcat :at))
+   :fun :mkhash :hashget :strcat :dequote :at))
 (in-package :chillax.utils)
 
 ;;; Functions
@@ -43,6 +43,12 @@ tl;dr: DWIM SETF function for HASHGET."
 ;;; Strings
 (defun strcat (string &rest more-strings)
   (apply #'concatenate 'string string more-strings))
+
+(defun dequote (string)
+  (let ((len (length string)))
+    (if (and (> len 1) (starts-with #\" string) (ends-with #\" string))
+      (subseq string 1 (- len 1))
+      string)))
 
 ;;;
 ;;; At
