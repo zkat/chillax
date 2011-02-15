@@ -1,5 +1,5 @@
 (asdf:defsystem chillax
-  :version "0.3"
+  :version "0.4.1"
   :description "CouchDB abstraction layer - Easy-load system with sane defaults"
   :maintainer "Kat Marchán <kzm@sykosomatic.org>"
   :author "Kat Marchán <kzm@sykosomatic.org>"
