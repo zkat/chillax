@@ -29,14 +29,12 @@
   "Quickly fetches the latest revision for DOC-ID. If ERRORP is NIL, this can be used to quickly
 test the existence of a document."
   (multiple-value-bind (x status-code headers)
-      (http-request (strcat (server-uri (database-server db))
-                            (database-name db)
-                            (url-encode (princ-to-string doc-id)))
+      (http-request (strcat (db-uri db) "/" (url-encode (princ-to-string doc-id)))
                     :method :head)
     (declare (ignore x))
     (case (or (cdr (assoc status-code +status-codes+ :test #'=))
               (error "Unknown status code: ~A." status-code))
-      (:ok (cdr (assoc :etag headers)))
+      (:ok (dequote (cdr (assoc :etag headers))))
       (:not-found (when errorp (error 'document-not-found :db db :id doc-id))))))
 
 (defun get-document (db id &key attachmentsp (errorp t) params)
