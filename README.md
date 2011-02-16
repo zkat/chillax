@@ -290,6 +290,8 @@ Chillax currently includes a basic wrapper for Design Document-related operation
 likely to expand in the future as good ideas reveal themselves. Design documents will still need to
 be created through the regular document API.
 
+Wiki: [HTTP View API](http://wiki.apache.org/couchdb/HTTP_view_API)
+
 *[function]* `view-cleanup db`
 
   Invokes \_view\_cleanup on DB. Old view output will remain on disk until this is invoked.
@@ -396,7 +398,7 @@ Self-explanatory readers:
   * :array-as-vector-p - If TRUE, parses JSON arrays as Lisp vectors. (default: nil)
   * :boolean-as-symbol-p - If TRUE, parses JSON booleans as symbols instead of CL booleans. (default: nil)
   * :object-as-alist-p - If TRUE, parses JSON objects as alists, instead of hash tables. (default: nil)
-  * :parse-object-key-fun - Function to process object keys with. (default: #'CL:IDENTITY)
+  * :parse-object-key-fun - Function to process object keys with. (default: #'cl:identity)
 
 
 ## Database Protocol
@@ -467,7 +469,7 @@ behavior, with minimal code.
 
 # Contributors
 
-* Josh Marchán <sykopomp@sykosomatic.org>
-* Adlai Chandrasekhar <munchking@gmail.com>
-* Ian McEwen <ianmcorvidae@ianmcorvidae.net>
-* Felix Lange <fjl@twurst.com>
+* Josh Marchán <sykopomp at sykosomatic.org>
+* Adlai Chandrasekhar <munchking at gmail.com>
+* Ian McEwen <ianmcorvidae at ianmcorvidae.net>
+* Felix Lange <fjl at twurst.com>
