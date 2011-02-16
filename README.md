@@ -66,8 +66,14 @@ to digging through the response objects for the data you need.
 
 ## Server API
 
+Chillax's Server API provides access to server-level functionality. Server objects not only give
+access to these database-independent features, but also act as mediators for all data that goes
+through Chillax. Chillax's server objects are in charge, for example, of translating CouchDB's JSON
+responses to and from whatever data format the user has chosen to use Lisp-side.
+
 Server objects are created through appropriate protocol implementations. See STANDARD-SERVER, and
-YASON-SERVER below for the included implementations.
+YASON-SERVER below for the included implementations. Additional or alternate functionality for
+serialization can easily be implemented through Chillax's server protocol.
 
 *[function]* `server-uri server`
 
@@ -109,6 +115,14 @@ YASON-SERVER below for the included implementations.
 
 
 ## Database API
+
+Connecting to a database in Chillax involves creating a database object with one of 3 constructors,
+all of which accept a server object (see Server API above), and the name of the database.
+
+The Database API additionally provides some utility functions for accessing database-level
+functionality in CouchDB.
+
+Wiki: [HTTP Database API](http://wiki.apache.org/couchdb/HTTP_database_API)
 
 *[function]* `db-connect server name`
 
@@ -160,6 +174,8 @@ All document arguments to these functions must be Lisp objects that the database
 encode to JSON. These functions will likewise return Lisp objects that represent the parsed JSON
 responses from CouchDB. Exact representations will depend on the server being used.
 
+Wiki: [HTTP Document API](http://wiki.apache.org/couchdb/HTTP_Document_API)
+
 *[function]* `get-document db id &key attachmentsp (errorpt)`
 
   Finds a CouchDB document in DB, named by ID. PARAMS should be an alist containing the parameters
@@ -200,9 +216,9 @@ know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on
 
 ## Bulk Document API
 
-CouchDB supports a bulk document API for fetching, updating, and deleting documents in batches.  For
-more details on this API, refer to
-[HTTP Bulk Document API](http://wiki.apache.org/couchdb/HTTP_Bulk_Document_API)
+CouchDB supports a bulk document API for fetching, updating, and deleting documents in batches.
+
+Wiki: [HTTP Bulk Document API](http://wiki.apache.org/couchdb/HTTP_Bulk_Document_API)
 
 *[function]* `all-documents db &rest all-keys`
 
@@ -218,8 +234,8 @@ more details on this API, refer to
 
 *[function]* `bulk-post-documents documents &key all-or-nothing-p`
 
-  Allows you to update or submit multiple documents at the same time, using CouchDB's _bulk_docs
-  API. In order to delete a document through this API, the document must have a _document attribute
+  Allows you to update or submit multiple documents at the same time, using CouchDB's \_bulk\_docs
+  API. In order to delete a document through this API, the document must have a \_document attribute
   with JSON 'true' as its value (note that what gets translated into 'true' depends on the server).
 
   DOCUMENTS must be a sequence or sequence-like (depending on what DATA->JSON will do to it).
@@ -231,19 +247,22 @@ more details on this API, refer to
 
 CouchDB has an API for uploading and downloading standalone attachments.
 
+Wiki: [Standalone Attachments](http://wiki.apache.org/couchdb/HTTP_Document_API#Standalone_Attachments)
+
 *[function]* `put-attachment db doc-id attachment-name data &key rev content-type`
 
   Adds DATA as an attachment. DATA can be a number of things:
 
+  * String or sequence of octets - DATA will be sent as-is directly to the server (using EXTERNAL-FORMAT-OUT for strings).
   * Stream - The stream will be read until EOF is reached.
   * Pathname - The file the pathname denotes will be opened and its data uploaded.
-  * Unary function - I don't know yet. Drakma seems to support this.
+  * Function designator - The corresponding function will be called with one argument, the stream to the server, to which it should send data.
 
   If the document already exists, REV is required. This function can be used on non-existent
   documents. If so, REV is not needed, and a document will be created automatically, and the
   attachment associated with it.
 
-  The CONTENT-TYPE should be a string specifying the content type for DATA.
+  The CONTENT-TYPE should be a string specifying the content type for DATA. (default: "application/octet-stream")
 
 
 *[function]* `get-attachment db doc-id attachment-name`
@@ -413,7 +432,7 @@ Once you put the binary in a place visible to the CouchDB process, add the follo
     [query_servers]
     common-lisp = /path/to/chillax-view-server
 
-Add the common-lisp entry if there's already a query_servers entry.
+Add the common-lisp entry if there's already a query\_servers entry.
 
 Once you've done this, you can start making queries directly in Lisp!
 
