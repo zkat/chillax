@@ -328,7 +328,7 @@ be created through the regular document API.
   * include-docs-p - If TRUE, includes the entire document with the result of the query. (default: false)
 
 
-*[function]* `query-temporary-view db &key (map (error)) reduce (language "common-lisp")`
+*[function]* `query-temporary-view db &key (map (error)) reduce (language "javascript")`
 
   Queries a temporary view. These views are meant to be for testing and development purposes, and
   should _not_ be used in actual code.
