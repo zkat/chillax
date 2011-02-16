@@ -97,7 +97,7 @@ query arguments.
 ;;;
 ;;; Views
 ;;;
-(defun query-temporary-view (db &rest all-keys &key (language "common-lisp") reduce
+(defun query-temporary-view (db &rest all-keys &key (language "javascript") reduce
                              (map (error "Must provide a map function for temporary views."))
                              key startkey startkey-docid endkey
                              endkey-docid limit skip
