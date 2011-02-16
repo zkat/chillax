@@ -5,9 +5,13 @@ installation of Chillax and all its dependencies.
 
 Make sure CouchDB is installed, and currently running. This example assumes that the server is
 running in localhost, using the default 5984 port. Yason's alist encoder/decoder is used below to
-make replies readable (by default, it uses hash tables as JSON objects, instead of alists).
+make replies readable (by default, it uses hash tables as JSON objects, instead of alists, and
+strings as keys).
 
     CL-USER> (ql:quickload 'chillax)
+             ...
+             ...
+             ...
     CL-USER> (in-package :chillax)
     CHILLAX> (defparameter *server* (make-instance 'yason-server :object-as-alist-p t
                                                    :parse-object-key-fun
@@ -32,28 +36,40 @@ make replies readable (by default, it uses hash tables as JSON objects, instead 
 
 # Introduction
 
-Chillax is a [CouchDB](http://couchdb.apache.org) abstraction layer for Common Lisp.
+Chillax is a [CouchDB](http://couchdb.apache.org) abstraction layer for Common Lisp. It is **not** an
+ORM or similar library, although it may be used to build such things.
 
 Chillax also includes a CouchDB view server, which can be used to write CouchDB views in full,
 native Common Lisp.
 
 Chillax includes several systems:
 
-* chillax.asd - This is a 'DWIM' system. It uses Yason to parse/encode JSON data. If you don't know
-  what you want, **this is probably what you want**.
+* chillax.asd - This is a 'DWIM' system. It includes the Yason server for parsing/encoding JSON
+  data. It also defines a single `#:chillax` package that includes the symbols in both
+  `#:chillax.core` and `#:chillax.yason`. If you don't know what you want, **this is probably what
+  you want**.
 * chillax.core.asd - Core API and protocols for servers, databases, documents, and
   design-docs.
 * chillax.yason.asd - Implementation of the server protocol using Yason's JSON parser.
 * chillax.utils.asd - Some handy utilities.
 * chillax.view-server.asd - The Chillax view server. This only depends on chillax.utils.
 
+# About this document
+
+This README is not meant to document how to use CouchDB itself, or how to successfully design
+applications with it. If you're new to CouchDB, it is recommended that you follow a guide (which can
+be done while using Chillax).
+
+The [CouchDB Guide](http://guide.couchdb.org/) is recommended, and the
+[CouchDB Wiki](http://wiki.apache.org/couchdb/) can be used as a general reference for CouchDB's
+API.
+
 # Core API
 
-The basic Chillax API is very straightforward: It is a thin, lispy layer on top of CouchDB's RESTful
-API. Its main purpose is to provide Lisp functions to all of CouchDB's API calls, while translating
-certain things into Lisp data and concepts. For example, Chillax takes care of checking CouchDB's
-HTTP response codes for sanity. When error codes are returned, Chillax will signal Lisp
-corresponding Lisp conditions.
+Chillax is a thin, lispy layer on top of CouchDB's RESTful API. Its main purpose is to provide Lisp
+functions to all of CouchDB's API calls, while translating certain things into Lisp data and
+concepts. For example, Chillax takes care of checking CouchDB's HTTP response codes for sanity. When
+error codes are returned, Chillax will signal Lisp corresponding Lisp conditions.
 
 Additionally, Chillax is able to use any representation for CouchDB documents, provided the core
 Chillax protocols are implemented for that representation, i.e, you can use hash tables, alists, or
@@ -342,6 +358,9 @@ You can use the core protocol to customize behavior of Chillax. Writing your own
 this protocol is relatively simple and painless, and it allows you to do things such as use your own
 custom JSON encoder/decoder, if Yason doesn't fit your needs. Classes that implement the protocols,
 and their behavior, is documented here, as well.
+
+For more information on the design of Chillax's protocol, refer to
+[Chillax and Protocols](http://sykosomatic.org/blog/?p=92).
 
 ## Server Protocol
 
