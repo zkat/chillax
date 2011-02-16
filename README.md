@@ -51,6 +51,7 @@ Chillax includes several systems:
 * chillax.core.asd - Core API and protocols for servers, databases, documents, and
   design-docs.
 * chillax.yason.asd - Implementation of the server protocol using Yason's JSON parser.
+* chillax.jsown.asd - Implementation of the server protocol using JSOWN's JSON parser.
 * chillax.utils.asd - Some handy utilities.
 * chillax.view-server.asd - The Chillax view server. This only depends on chillax.utils.
 
@@ -420,6 +421,29 @@ Self-explanatory readers:
   * :parse-object-key-fun - Function to process object keys with. (default: #'cl:identity)
 
 
+*[standard class]* `jsown-server`
+
+   JSOWN-SERVERs use JSOWN's JSON parser/encoder to automatically translate content going to/coming
+   from the associated CouchDB server.
+
+   JSOWN-SERVER is a subclass of STANDARD-SERVER, and the same initargs apply.
+
+
+*[function]* `call-with-key-container`
+
+  This function is part of the chillax.jsown package.
+
+  Calls FUNCTION, which require zero arguments, in a context where CONTAINER will be used for
+  jsown:parse-with-container.
+
+
+*[macro]* `with-key-container`
+
+  This macro is part of the chillax.jsown package.
+
+  Convenience macro for call-with-key-container.
+
+
 ## Database Protocol
 
 *[generic function]* `database-server database`
@@ -431,7 +455,7 @@ Self-explanatory readers:
 
   Returns the URL-encoded name of the database, a string. Note that CouchDB accepts certain
   characters in database names -only- if they are URL-encoded (such as #\/). It is up to individual
-  implementations of DATABASE-NAME to implement this encoding."
+  implementations of DATABASE-NAME to implement this encoding.
 
 
 ### Included protocol implementation
