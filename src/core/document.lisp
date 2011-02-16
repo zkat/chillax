@@ -133,8 +133,11 @@ attachment associated with it.
 The CONTENT-TYPE should be a string specifying the content type for DATA."
   (multiple-value-bind (response status-code)
       (http-request (strcat (server-uri (database-server db))
+                            "/"
                             (database-name db)
+                            "/"
                             (url-encode (princ-to-string doc-id))
+                            "/"
                             attachment-name)
                     :method :put
                     :parameters (when rev
@@ -144,7 +147,8 @@ The CONTENT-TYPE should be a string specifying the content type for DATA."
     (case (or (cdr (assoc status-code +status-codes+ :test #'=))
               (error "Unknown status code: ~A. HTTP Response: ~A"
                      status-code response))
-      (:ok (data->json (database-server db) response))
+      (:ok (json->data (database-server db) response))
+      (:created (json->data (database-server db) response))
       (:not-found (error 'document-not-found :db db :id doc-id))
       (otherwise (error 'unexpected-response :status-code status-code :response response)))))
 
@@ -158,8 +162,11 @@ The CONTENT-TYPE should be a string specifying the content type for DATA."
   3. CONTENT-LENGTH - Declared content length for the incoming data."
   (multiple-value-bind (response status-code headers fourth fifth must-close-p)
       (http-request (strcat (server-uri (database-server db))
+                            "/"
                             (database-name db)
+                            "/"
                             (url-encode (princ-to-string doc-id))
+                            "/"
                             attachment-name)
                     :want-stream t)
     (declare (ignore fourth fifth))
@@ -177,22 +184,29 @@ The CONTENT-TYPE should be a string specifying the content type for DATA."
   "Deletes an attachment from a document. DOC-REVISION must be the latest revision for the document."
   (multiple-value-bind (response status-code)
       (http-request (strcat (server-uri (database-server db))
+                            "/"
                             (database-name db)
+                            "/"
                             (url-encode (princ-to-string doc-id))
+                            "/"
                             attachment-name)
                     :method :delete
                     :parameters `(("rev" . ,doc-revision)))
     (case (or (cdr (assoc status-code +status-codes+ :test #'=))
               (error "Unknown status code: ~A. HTTP Response: ~A"
                      status-code response))
-      (:ok (data->json (database-server db) response))
+      (:ok (json->data (database-server db) response))
       (:not-found (error 'document-not-found :db db :id doc-id))
       (otherwise (error 'unexpected-response :status-code status-code :response response)))))
 
-(defun copy-attachment (db doc-id attachment-name output-stream)
+(defun copy-attachment (db doc-id attachment-name output-stream &key (max-buffer-size 4096))
   "Copies data from the named attachment to OUTPUT-STREAM. Returns the number of bytes copied."
-  (multiple-value-bind (attachment-stream must-close-p)
+  (multiple-value-bind (attachment-stream must-close-p content-length)
       (get-attachment db doc-id attachment-name)
-    (unwind-protect (alexandria:copy-stream (flex:flexi-stream-stream attachment-stream) output-stream)
+    (unwind-protect
+         (if (plusp content-length)
+             (copy-stream (flex:flexi-stream-stream attachment-stream) output-stream
+                          :buffer-size (mod content-length max-buffer-size))
+             0)
       (when must-close-p
         (close attachment-stream)))))
