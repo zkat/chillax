@@ -119,12 +119,15 @@ If ALL-OR-NOTHING-P is true, the entire submission will fail if a single one fai
 ;;;
 ;;; Standalone Attachments
 ;;;
-(defun put-attachment (db doc-id attachment-name data &key rev content-type)
+(defun put-attachment (db doc-id attachment-name data &key rev (content-type "application/octet-stream"))
   "Adds DATA as an attachment. DATA can be a number of things:
 
+  * String or sequence of octets - DATA will be sent as-is directly to the server (using
+    EXTERNAL-FORMAT-OUT for strings).
   * Stream - The stream will be read until EOF is reached.
   * Pathname - The file the pathname denotes will be opened and its data uploaded.
-  * Unary function - I don't know yet. Drakma seems to support this.
+  * Function designator - The corresponding function will be called with one argument, the
+    stream to the server, to which it should send data.
 
 If the document already exists, REV is required. This function can be used on non-existent
 documents. If so, REV is not needed, and a document will be created automatically, and the
