@@ -25,14 +25,15 @@
   "Compaction can really help when you have very large views, very little space, or both."
   (handle-request (response db (strcat "_compact/" design-doc-name) :method :post)
     (:accepted response)
-    (:not-found (error 'document-not-found :db db :id design-doc-name))))
+    (:not-found (error 'document-not-found :db db :id (strcat "_design/" design-doc-name)))))
 
 (defun design-doc-info (db design-doc-name)
   "Returns an object with various bits of status information. Refer to CouchDB documentation for
 specifics on each value."
-  (handle-request (response db (strcat "_design/" design-doc-name "/_info"))
-    (:ok response)
-    (:not-found (error 'document-not-found :db db :id design-doc-name))))
+  (let ((ddoc (strcat "_design/" design-doc-name)))
+    (handle-request (response db (strcat ddoc "/_info"))
+      (:ok response)
+      (:not-found (error 'document-not-found :db db :id ddoc)))))
 
 (defun build-view-params (database &key
                           (key nil key-given)
