@@ -21,9 +21,11 @@ specifics on each value."
     (:ok response)
     (:not-found (error 'document-not-found :db db :id design-doc-name))))
 
-(defun build-view-params (&key
-                          key startkey startkey-docid endkey
-                          endkey-docid limit skip
+(defun build-view-params (database &key
+                          (key nil key-given)
+                          (startkey nil startkey-given)
+                          (endkey nil endkey-given)
+                          startkey-docid endkey-docid limit skip
                           (descendingp nil descendingpp)
                           (groupp nil grouppp) group-level
                           (reducep t reducepp) stalep
@@ -36,10 +38,12 @@ specifics on each value."
              (maybe-param (test name value)
                (when test (%param name value)))
              (param (name value)
-               (maybe-param value name value)))
-      (param "key" key)
-      (param "startkey" startkey)
-      (param "endkey" endkey)
+               (maybe-param value name value))
+             (encode (value)
+               (data->json (database-server database) value)))
+      (maybe-param key-given "key" (encode key))
+      (maybe-param startkey-given "startkey" (encode startkey))
+      (maybe-param endkey-given "endkey" (encode endkey))
       (maybe-param inclusive-end-p-p "inclusive_end" (if inclusive-end-p "true" "false"))
       (param "startkey_docid" startkey-docid)
       (param "endkey_docid" endkey-docid)
@@ -81,7 +85,7 @@ query arguments.
   * include-docs-p - If TRUE, includes the entire document with the result of the query. (default: false)"
   (declare (ignore key startkey startkey-docid endkey endkey-docid limit skip descendingp
                    groupp group-level reducep stalep include-docs-p inclusive-end-p))
-  (let ((params (apply #'build-view-params all-keys))
+  (let ((params (apply #'build-view-params db all-keys))
         (doc-name (strcat "_design/" design-doc-name "/_view/" view-name)))
     (if multi-keys
         ;; If we receive the MULTI-KEYS argument, we have to do a POST instead.
@@ -116,7 +120,7 @@ should _not_ be used in actual code."
                 (when reduce
                   (format s ",\"reduce\":~S" reduce))
                 (format s "}")))
-        (params (apply #'build-view-params all-keys)))
+        (params (apply #'build-view-params db all-keys)))
     (handle-request (response db "_temp_view" :method :post
                               :parameters params
                               :content json
