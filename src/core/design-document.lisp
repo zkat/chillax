@@ -1,6 +1,19 @@
 (in-package :chillax.core)
 
 ;;;
+;;; Design Doc errors
+;;;
+(define-condition view-not-found (couchdb-error)
+  ((view       :initarg :view :reader view-404-view)
+   (design-doc :initarg :ddoc :reader view-404-design-document)
+   (db         :initarg :db   :reader view-404-db))
+  (:report (lambda (e s)
+             (format s "No view \"_design/~A/_view/~A\" was found in ~A"
+                     (view-404-design-document e)
+                     (view-404-view e)
+                     (view-404-db e)))))
+
+;;;
 ;;; Design Doc basics
 ;;;
 (defun view-cleanup (db)
@@ -12,18 +25,21 @@
   "Compaction can really help when you have very large views, very little space, or both."
   (handle-request (response db (strcat "_compact/" design-doc-name) :method :post)
     (:accepted response)
-    (:not-found (error 'document-not-found :db db :id design-doc-name))))
+    (:not-found (error 'document-not-found :db db :id (strcat "_design/" design-doc-name)))))
 
 (defun design-doc-info (db design-doc-name)
   "Returns an object with various bits of status information. Refer to CouchDB documentation for
 specifics on each value."
-  (handle-request (response db (strcat "_design/" design-doc-name "/_info"))
-    (:ok response)
-    (:not-found (error 'document-not-found :db db :id design-doc-name))))
+  (let ((ddoc (strcat "_design/" design-doc-name)))
+    (handle-request (response db (strcat ddoc "/_info"))
+      (:ok response)
+      (:not-found (error 'document-not-found :db db :id ddoc)))))
 
-(defun build-view-params (&key
-                          key startkey startkey-docid endkey
-                          endkey-docid limit skip
+(defun build-view-params (database &key
+                          (key nil key-given)
+                          (startkey nil startkey-given)
+                          (endkey nil endkey-given)
+                          startkey-docid endkey-docid limit skip
                           (descendingp nil descendingpp)
                           (groupp nil grouppp) group-level
                           (reducep t reducepp) stalep
@@ -36,10 +52,12 @@ specifics on each value."
              (maybe-param (test name value)
                (when test (%param name value)))
              (param (name value)
-               (maybe-param value name value)))
-      (param "key" key)
-      (param "startkey" startkey)
-      (param "endkey" endkey)
+               (maybe-param value name value))
+             (encode (value)
+               (data->json (database-server database) value)))
+      (maybe-param key-given "key" (encode key))
+      (maybe-param startkey-given "startkey" (encode startkey))
+      (maybe-param endkey-given "endkey" (encode endkey))
       (maybe-param inclusive-end-p-p "inclusive_end" (if inclusive-end-p "true" "false"))
       (param "startkey_docid" startkey-docid)
       (param "endkey_docid" endkey-docid)
@@ -81,18 +99,28 @@ query arguments.
   * include-docs-p - If TRUE, includes the entire document with the result of the query. (default: false)"
   (declare (ignore key startkey startkey-docid endkey endkey-docid limit skip descendingp
                    groupp group-level reducep stalep include-docs-p inclusive-end-p))
-  (let ((params (apply #'build-view-params all-keys))
+  (let ((params (apply #'build-view-params db all-keys))
         (doc-name (strcat "_design/" design-doc-name "/_view/" view-name)))
     (if multi-keys
-        ;; If we receive the MULTI-KEYS argument, we have to do a POST instead.
-        (handle-request (response db doc-name :method :post
-                                  :parameters params
-                                  :content (format nil "{\"keys\":[~{~S~^,~}]}" multi-keys)
-                                  :convert-data-p nil)
-          (:ok response))
+        (let* ((server (database-server db))
+               (content (with-output-to-string (s)
+                          (write-string "{\"keys\":[" s)
+                          (mapl (lambda (kl)
+                                  (write-string (data->json server (car kl)) s)
+                                  (unless (null (cdr kl))
+                                    (write-string "," s)))
+                                multi-keys)
+                          (write-string "]}" s))))
+          ;; If we receive the MULTI-KEYS argument, we have to do a POST instead.
+          (handle-request (response db doc-name :method :post
+                                    :parameters params
+                                    :content content
+                                    :convert-data-p nil)
+            (:ok response)
+            (:not-found (error 'view-not-found :db db :view view-name :ddoc design-doc-name))))
         (handle-request (response db doc-name :parameters params)
           (:ok response)
-          (:not-found (error 'document-not-found :db db :id design-doc-name))))))
+          (:not-found (error 'view-not-found :db db :view view-name :ddoc design-doc-name))))))
 
 ;;;
 ;;; Views
@@ -116,7 +144,7 @@ should _not_ be used in actual code."
                 (when reduce
                   (format s ",\"reduce\":~S" reduce))
                 (format s "}")))
-        (params (apply #'build-view-params all-keys)))
+        (params (apply #'build-view-params db all-keys)))
     (handle-request (response db "_temp_view" :method :post
                               :parameters params
                               :content json
