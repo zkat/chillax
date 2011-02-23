@@ -88,12 +88,21 @@ query arguments.
   (let ((params (apply #'build-view-params db all-keys))
         (doc-name (strcat "_design/" design-doc-name "/_view/" view-name)))
     (if multi-keys
-        ;; If we receive the MULTI-KEYS argument, we have to do a POST instead.
-        (handle-request (response db doc-name :method :post
-                                  :parameters params
-                                  :content (format nil "{\"keys\":[~{~S~^,~}]}" multi-keys)
-                                  :convert-data-p nil)
-          (:ok response))
+        (let* ((server (database-server db))
+               (content (with-output-to-string (s)
+                          (write-string "{\"keys\":[" s)
+                          (mapl (lambda (kl)
+                                  (write-string (data->json server (car kl)) s)
+                                  (unless (null (cdr kl))
+                                    (write-string "," s)))
+                                multi-keys)
+                          (write-string "]}" s))))
+          ;; If we receive the MULTI-KEYS argument, we have to do a POST instead.
+          (handle-request (response db doc-name :method :post
+                                    :parameters params
+                                    :content content
+                                    :convert-data-p nil)
+            (:ok response)))
         (handle-request (response db doc-name :parameters params)
           (:ok response)
           (:not-found (error 'document-not-found :db db :id design-doc-name))))))
