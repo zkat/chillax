@@ -1,6 +1,19 @@
 (in-package :chillax.core)
 
 ;;;
+;;; Design Doc errors
+;;;
+(define-condition view-not-found (couchdb-error)
+  ((view       :initarg :view :reader view-404-view)
+   (design-doc :initarg :ddoc :reader view-404-design-document)
+   (db         :initarg :db   :reader view-404-db))
+  (:report (lambda (e s)
+             (format s "No view \"_design/~A/_view/~A\" was found in ~A"
+                     (view-404-design-document e)
+                     (view-404-view e)
+                     (view-404-db e)))))
+
+;;;
 ;;; Design Doc basics
 ;;;
 (defun view-cleanup (db)
@@ -102,10 +115,11 @@ query arguments.
                                     :parameters params
                                     :content content
                                     :convert-data-p nil)
-            (:ok response)))
+            (:ok response)
+            (:not-found (error 'view-not-found :db db :view view-name :ddoc design-doc-name))))
         (handle-request (response db doc-name :parameters params)
           (:ok response)
-          (:not-found (error 'document-not-found :db db :id design-doc-name))))))
+          (:not-found (error 'view-not-found :db db :view view-name :ddoc design-doc-name))))))
 
 ;;;
 ;;; Views
