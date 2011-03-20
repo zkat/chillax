@@ -122,7 +122,7 @@ map functions should be cleared out."
 
 (defun map-doc (doc)
   "Responds to CouchDB with the results of calling all the currently-active map functions on DOC."
-  (respond (or (mapcar (fun (call-map-function _ doc)) *functions*) '((#())))))
+  (respond (or (mapcar (fun (call-map-function _ doc)) (reverse *functions*)) '((#())))))
 
 (defun reduce-results (fun-strings keys-and-values)
   "Responds to CouchDb with the results of calling the functions in FUN-STRINGS on KEYS-AND-VALUES."
@@ -139,7 +139,7 @@ map functions should be cleared out."
 (defun filter (docs req user-context)
   "Responds to CouchDB with the result of filtering DOCS using the current filter function."
   ;; Yes. I know it only uses the first function only. The JS view server does the same thing.
-  (respond (list t (mapcar (fun (call-user-function (car *functions*) _ req user-context)) docs))))
+  (respond (list t (mapcar (fun (call-user-function (car (last *functions*)) _ req user-context)) docs))))
 
 (defun validate (fun-string new-doc old-doc user-context)
   "Executes a view function that validates NEW-DOC as a new version of OLD-DOC.
