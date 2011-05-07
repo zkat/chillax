@@ -88,8 +88,7 @@ with the source code to compile a function from."
 (defvar *map-results*)
 (defun emit (key value)
   "Adds an entry to the current map function results."
-  (when (boundp '*map-results*) ;*map-results* is bound when the view server is started.
-    (push (list key value) *map-results*)))
+  (push (list key value) *map-results*))
 
 (defun log-message (format-string &rest format-args)
   "Like FORMAT, but the resulting string is written to CouchDB's log."
@@ -171,11 +170,11 @@ should return (values document response)."
 ;;; View server
 ;;;
 (defparameter *dispatch*
-  `(("reset" . ,#'reset)
-    ("add_fun" . ,#'add-fun)
-    ("map_doc" . ,#'map-doc)
-    ("reduce" . ,#'reduce-results)
-    ("rereduce" . ,#'rereduce)
+  `(("reset" . reset)
+    ("add_fun" . add-fun)
+    ("map_doc" . map-doc)
+    ("reduce" . reduce-results)
+    ("rereduce" . rereduce)
     ;; TODO - everything below here has changed.
     ;;        CouchDB now uses some sort of 'DDoc'
     ;;        thing, so this needs updating.
