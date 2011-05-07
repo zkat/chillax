@@ -88,8 +88,7 @@ with the source code to compile a function from."
 (defvar *map-results*)
 (defun emit (key value)
   "Adds an entry to the current map function results."
-  (when (boundp '*map-results*) ;*map-results* is bound when the view server is started.
-    (push (list key value) *map-results*)))
+  (push (list key value) *map-results*))
 
 (defun log-message (format-string &rest format-args)
   "Like FORMAT, but the resulting string is written to CouchDB's log."
@@ -122,7 +121,7 @@ map functions should be cleared out."
 
 (defun map-doc (doc)
   "Responds to CouchDB with the results of calling all the currently-active map functions on DOC."
-  (respond (or (mapcar (fun (call-map-function _ doc)) *functions*) '((#())))))
+  (respond (or (mapcar (fun (call-map-function _ doc)) (reverse *functions*)) '((#())))))
 
 (defun reduce-results (fun-strings keys-and-values)
   "Responds to CouchDb with the results of calling the functions in FUN-STRINGS on KEYS-AND-VALUES."
@@ -139,7 +138,7 @@ map functions should be cleared out."
 (defun filter (docs req user-context)
   "Responds to CouchDB with the result of filtering DOCS using the current filter function."
   ;; Yes. I know it only uses the first function only. The JS view server does the same thing.
-  (respond (list t (mapcar (fun (call-user-function (car *functions*) _ req user-context)) docs))))
+  (respond (list t (mapcar (fun (call-user-function (car (last *functions*)) _ req user-context)) docs))))
 
 (defun validate (fun-string new-doc old-doc user-context)
   "Executes a view function that validates NEW-DOC as a new version of OLD-DOC.
@@ -171,11 +170,11 @@ should return (values document response)."
 ;;; View server
 ;;;
 (defparameter *dispatch*
-  `(("reset" . ,#'reset)
-    ("add_fun" . ,#'add-fun)
-    ("map_doc" . ,#'map-doc)
-    ("reduce" . ,#'reduce-results)
-    ("rereduce" . ,#'rereduce)
+  `(("reset" . reset)
+    ("add_fun" . add-fun)
+    ("map_doc" . map-doc)
+    ("reduce" . reduce-results)
+    ("rereduce" . rereduce)
     ;; TODO - everything below here has changed.
     ;;        CouchDB now uses some sort of 'DDoc'
     ;;        thing, so this needs updating.
