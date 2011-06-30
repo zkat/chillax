@@ -118,7 +118,7 @@ If ALL-OR-NOTHING-P is true, the entire submission will fail if a single one fai
                                            (princ ",\"all_or_nothing\":true" s))
                                          (princ "}" s))
                               :convert-data-p nil)
-      (:ok response))))
+      ((:ok :accepted :created) response))))
 
 ;;;
 ;;; Standalone Attachments
