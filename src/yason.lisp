@@ -37,9 +37,9 @@
         (yason:encode data s))))
 
 (defmethod json->data ((server yason-server) json &key)
-  (let ((yason:*parse-json-arrays-as-vectors* (parse-json-arrays-as-vectors-p server))
-        (yason:*parse-json-booleans-as-symbols* (parse-json-booleans-as-symbols-p server))
-        (yason:*parse-object-as-alist* (parse-object-as-alist-p server))
-        (yason:*parse-object-key-fn* (parse-object-key-fun server))) 
-    (yason:parse json)))
+  (yason:parse json
+               :object-key-fn (parse-object-key-fun server)
+               :object-as (if (parse-object-as-alist-p server) :alist :hash-table)
+               :json-booleans-as-symbols (parse-json-booleans-as-symbols-p server)
+               :json-arrays-as-vectors (parse-json-arrays-as-vectors-p server)))
 
