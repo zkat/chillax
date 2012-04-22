@@ -86,13 +86,13 @@ need is to create a new document with a generated id, consider using GET-UUIDS w
   "Requests the _all_docs document. ALL-KEYS correspond to GET-DOCUMENT's keyword arguments."
   (apply #'get-document db "_all_docs" all-keys))
 
-(defun batch-get-documents (db doc-ids)
+(defun batch-get-documents (db doc-ids &key (include-docs-p nil))
   "Uses _all_docs to quickly fetch the given DOC-IDs in a single request. Note that this function
 will NOT signal a DOCUMENT-NOT-FOUND error when one or more DOC-IDs are not found. Instead, the
 results will be returned, and it's the user's responsibility to deal with any missing docs."
   (handle-request (response db "_all_docs" :method :post
-                            :parameters '(("include_docs" . "true"))
-                            :content (format nil "{\"keys\":~S}"
+                            :parameters (list (cons "include_docs"  (if include-docs-p "true" "false")))
+                            :content (format nil "{\"keys\":~A}"
                                              (data->json (database-server db) doc-ids))
                             :convert-data-p nil)
     (:ok response)))
@@ -114,7 +114,7 @@ If ALL-OR-NOTHING-P is true, the entire submission will fail if a single one fai
                                            (princ ",\"all_or_nothing\":true" s))
                                          (princ "}" s))
                               :convert-data-p nil)
-      (:ok response))))
+      ((:ok :accepted :created) response))))
 
 ;;;
 ;;; Standalone Attachments
