@@ -29,7 +29,7 @@
   "Quickly fetches the latest revision for DOC-ID. If ERRORP is NIL, this can be used to quickly
 test the existence of a document."
   (multiple-value-bind (x status-code headers)
-      (http-request (strcat (db-uri db) "/" (url-encode (princ-to-string doc-id)))
+      (http-request (strcat (db-uri db) "/" (url-encode* (princ-to-string doc-id)))
                     :method :head)
     (declare (ignore x))
     (case (or (cdr (assoc status-code +status-codes+ :test #'=))
@@ -42,7 +42,7 @@ test the existence of a document."
 for the HTTP GET request. If ATTACHMENTSP is TRUE, the document's attachments will be included in
 their entirety in their base64-encoded version. It is not recommended you use this unless you really
 know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on 404."
-  (handle-request (response db (url-encode (princ-to-string id))
+  (handle-request (response db (url-encode* (princ-to-string id))
                             :parameters (if attachmentsp
                                             (cons (cons "attachments" "true") params)
                                             params))
@@ -51,7 +51,7 @@ know what you're doing. If ERRORP is NIL, GET-DOCUMENT will simply return NIL on
 
 (defun put-document (db id doc &key batch-ok-p)
   "Puts a document into DB, using ID."
-  (handle-request (response db (url-encode (princ-to-string id)) :method :put :content doc
+  (handle-request (response db (url-encode* (princ-to-string id)) :method :put :content doc
                             :parameters (when batch-ok-p '(("batch" . "ok"))))
     ((:created :accepted) response)
     (:conflict (error 'document-conflict :id id :doc doc))))
@@ -67,13 +67,13 @@ need is to create a new document with a generated id, consider using GET-UUIDS w
 
 (defun delete-document (db id revision)
   "Deletes an existing document."
-  (handle-request (response db (url-encode (format nil "~A?rev=~A" id revision)) :method :delete)
+  (handle-request (response db (url-encode* (format nil "~A?rev=~A" id revision)) :method :delete)
     (:ok response)
     (:not-found (error 'document-not-found :db db :id id))))
 
 (defun copy-document (db from-id to-id &key revision)
   "Copies a document's content in-database."
-  (handle-request (response db (url-encode (princ-to-string from-id)) :method :copy
+  (handle-request (response db (url-encode* (princ-to-string from-id)) :method :copy
                             :additional-headers `(("Destination" . ,(princ-to-string to-id)))
                             :parameters `(,(when revision `("rev" . ,revision))))
     (:created response)
@@ -139,7 +139,7 @@ The CONTENT-TYPE should be a string specifying the content type for DATA."
                             "/"
                             (database-name db)
                             "/"
-                            (url-encode (princ-to-string doc-id))
+                            (url-encode* (princ-to-string doc-id))
                             "/"
                             attachment-name)
                     :method :put
@@ -168,7 +168,7 @@ The CONTENT-TYPE should be a string specifying the content type for DATA."
                             "/"
                             (database-name db)
                             "/"
-                            (url-encode (princ-to-string doc-id))
+                            (url-encode* (princ-to-string doc-id))
                             "/"
                             attachment-name)
                     :want-stream t)
@@ -190,7 +190,7 @@ The CONTENT-TYPE should be a string specifying the content type for DATA."
                             "/"
                             (database-name db)
                             "/"
-                            (url-encode (princ-to-string doc-id))
+                            (url-encode* (princ-to-string doc-id))
                             "/"
                             attachment-name)
                     :method :delete

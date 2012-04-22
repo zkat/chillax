@@ -112,7 +112,7 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
   (:documentation
    "Minimal, class-based implementation of the database protocol."))
 
-(defun url-encode (string)
+(defun url-encode* (string)
   ;; TODO - escape other characters.
   (with-output-to-string (s)
     (loop for char across string
@@ -121,7 +121,7 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
             (otherwise (write-char char s))))))
 
 (defmethod initialize-instance :after ((db standard-database) &key name)
-  (setf (slot-value db 'name) (url-encode name)))
+  (setf (slot-value db 'name) (url-encode* name)))
 
 (defmethod print-object ((db standard-database) stream)
   (print-database db stream))
