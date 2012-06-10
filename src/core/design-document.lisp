@@ -71,6 +71,39 @@ specifics on each value."
       (maybe-param include-docs-p-p "include_docs" (if include-docs-p "true" "false")))
     params))
 
+(defun query-list (db design-doc-name list-name view-name &rest all-keys
+                   &key key startkey startkey-docid endkey
+                   multi-keys endkey-docid limit skip
+                   descendingp groupp group-level
+                   reducep stalep include-docs-p
+                   inclusive-end-p)
+  "Queries view named by VIEW-NAME in DESIGN-DOC-NAME. Keyword arguments correspond to CouchDB view
+query arguments."
+
+  (declare (ignore key startkey startkey-docid endkey endkey-docid limit skip descendingp
+                   groupp group-level reducep stalep include-docs-p inclusive-end-p))
+  (let ((params (apply #'build-view-params db all-keys))
+        (doc-name (strcat "_design/" design-doc-name "/_list/" list-name "/" view-name)))
+    (if multi-keys
+        (let* ((server (database-server db))
+               (content (with-output-to-string (s)
+                          (write-string "{\"keys\":[" s)
+                          (mapl (lambda (kl)
+                                  (write-string (data->json server (car kl)) s)
+                                  (unless (null (cdr kl))
+                                    (write-string "," s)))
+                                multi-keys)
+                          (write-string "]}" s))))
+          ;; If we receive the MULTI-KEYS argument, we have to do a POST instead.
+          (handle-request (response db doc-name :method :post
+                                    :parameters params
+                                    :content content
+                                    :convert-data-p nil)
+            (:ok response)
+            (:not-found (error 'view-not-found :db db :view view-name :ddoc design-doc-name))))
+        (handle-request (response db doc-name :parameters params)
+          (:ok response)
+          (:not-found (error 'view-not-found :db db :view view-name :ddoc design-doc-name))))))
 (defun query-view (db design-doc-name view-name &rest all-keys
                    &key key startkey startkey-docid endkey
                    multi-keys endkey-docid limit skip

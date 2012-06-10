@@ -48,6 +48,7 @@
    :compact-design-doc
    :design-doc-info
    :query-view
+   :query-list
    :query-temporary-view
 
    ;;;
