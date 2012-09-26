@@ -113,12 +113,7 @@ database was created, (DB-OBJECT T) is returned. Otherwise, (DB-OBJECT NIL)"
    "Minimal, class-based implementation of the database protocol."))
 
 (defun url-encode (string)
-  ;; TODO - escape other characters.
-  (with-output-to-string (s)
-    (loop for char across string
-       do (case char
-            (#\/ (princ "%2F" s))
-            (otherwise (write-char char s))))))
+  (drakma:url-encode string :utf-8))
 
 (defmethod initialize-instance :after ((db standard-database) &key name)
   (setf (slot-value db 'name) (url-encode name)))
