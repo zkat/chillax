@@ -1,5 +1,6 @@
 (cl:defpackage #:chillax.core
   (:use :cl :flexi-streams :drakma :alexandria :chillax.utils)
+  (:shadow :url-encode)
   (:export
 
    ;; Conditions

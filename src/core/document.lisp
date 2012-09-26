@@ -67,7 +67,11 @@ need is to create a new document with a generated id, consider using GET-UUIDS w
 
 (defun delete-document (db id revision)
   "Deletes an existing document."
-  (handle-request (response db (url-encode (format nil "~A?rev=~A" id revision)) :method :delete)
+  (handle-request (response db
+                            (strcat (url-encode (princ-to-string id))
+                                    "?rev="
+                                    (url-encode (princ-to-string revision)))
+                            :method :delete)
     (:ok response)
     (:not-found (error 'document-not-found :db db :id id))))
 
