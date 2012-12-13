@@ -11,9 +11,9 @@
 ;;;
 (defparameter *user-package* (find-package :chillax-server-user)
   "Package that user view functions will be compiled and executed in.")
-(defparameter *encode-json* #'json:encode
+(defparameter *encode-json* #'yason:encode
   "Function to use when encoding Lisp->JSON. Must return a string.")
-(defparameter *decode-json* #'json:parse
+(defparameter *decode-json* #'yason:parse
   "Function to use to decode JSON->Lisp. Must accept a string.")
 
 ;;;
