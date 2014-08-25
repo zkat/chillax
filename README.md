@@ -481,8 +481,8 @@ Add the common-lisp entry if there's already a query\_servers entry.
 
 Once you've done this, you can start making queries directly in Lisp!
 
-    CHILLAX> (invoke-temporary-view *db* :language "common-lisp"
-                                         :map (prin1-to-string '(lambda (doc) (emit doc 1))))
+    CHILLAX> (query-temporary-view *db* :language "common-lisp"
+                                         :map (write-to-string '(lambda (doc) (emit doc 1)) :pretty nil :escape t))
 
 You can load anything you want into the view server image before dumping it, customize which package
 it executes views in, etc. The source code is fairly short and easy to digest. It's designed to be

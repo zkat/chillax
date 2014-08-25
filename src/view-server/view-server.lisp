@@ -86,7 +86,7 @@ with the source code to compile a function from."
 ;;; User-accessible functions
 ;;;
 (defvar *map-results*)
-(defun emit (key value)
+(defun emit (key &optional value)
   "Adds an entry to the current map function results."
   (push (list key value) *map-results*))
 
@@ -117,7 +117,7 @@ map functions should be cleared out."
 (defun call-map-function (function doc &aux *map-results*)
   "Calls a stored compile function on a document. *MAP-RESULTS* is where EMIT will send k/v pairs."
   (call-user-function function doc)
-  (or *map-results* '(#())))
+  (or *map-results* #()))
 
 (defun map-doc (doc)
   "Responds to CouchDB with the results of calling all the currently-active map functions on DOC."
